@@ -164,7 +164,9 @@ export default function Sorter() {
 
       {busy && !ready && <p className="text-center text-sm text-slate-500">Waiting for the model to finish loading…</p>}
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
-      {verdict && classifier.current && <VerdictCard verdict={verdict} meta={classifier.current.meta} />}
+      {verdict && classifier.current && (
+        <VerdictCard verdict={verdict} meta={classifier.current.meta} photo={photo} />
+      )}
       {(verdict || error) && (
         <button
           type="button"
