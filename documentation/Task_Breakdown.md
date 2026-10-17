@@ -53,13 +53,13 @@
 
 ---
 
-### Task 1.2: Serverless Gemini Vision API Route
-- **Status**: `[SUPERSEDED / BYPASSED - ZERO API KEY PIVOT]`
+### Task 1.2: Serverless Gemini Vision API Route with Structured JSON Output
+- **Status**: `[COMPLETED]` (Builder Agent, PR #8)
 - **Target Files**:
   - `app/api/classify/route.ts`
   - `lib/gemini.ts`
   - `lib/types.ts`
-- **Architectural Decision**: Per project directive, external Gemini API key dependency is dropped. All classification is performed on-device via Task 1.3/1.4 with zero API keys, eliminating third-party billing, rate limits, network latency, and privacy concerns.
+- **Architectural Implementation**: Hybrid multimodal route calling Gemini 2.5 Flash via `@google/genai` with structured JSON schema (`responseSchema`) enforcing Seattle municipal rules (compost/recycling/trash, plastic bags -> trash, styrofoam -> trash, batteries -> trash with hazard warning, <60% confidence -> lowConfidenceWarning). Provides deep material analysis and regulatory rationale on demand alongside zero-latency client-side ONNX inference.
 
 ---
 
