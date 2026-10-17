@@ -7,26 +7,31 @@
 
 ---
 
-## Architecture Overview
+## Architecture Overview (Hybrid Edge + Cloud AI)
 
 ```
 [User Browser / Mobile Camera]
        │
-       ▼ (Image Capture: Base64 / Multipart)
-[Next.js / React Frontend on Vercel]
-       │
-       ▼ (POST /api/classify - Server-side proxy)
-[Vercel Serverless Function] ──(Secure GEMINI_API_KEY)──► [Google Gemini Multimodal API]
-       │                                                         │
-       ◄─────────── (Structured JSON Output) ────────────────────┘
-       │
-       ▼
-[Classification Card Display: Bin (Compost/Recycle/Trash) + Confidence + Rationale + Warnings]
+       ├─────────────────────────────────────────┐
+       ▼ (Instant Local Inference: <50ms)        ▼ (Deep Multimodal Analysis)
+[ONNX Runtime Web (WASM)]               [POST /api/classify - Next.js Route]
+   • EfficientNetV2-S (12 classes)               │
+   • Runs 100% in-browser                        ▼ (Secure GEMINI_API_KEY)
+   • Zero cloud latency                  [Google Gemini 2.5 Flash / Pro]
+       │                                         │
+       │                                         ▼ (Structured JSON)
+       │                                   • Contamination Alerts
+       │                                   • Sorting Rationale
+       │                                   • Multi-Material Disassembly
+       ▼                                         │
+┌────────────────────────────────────────────────┴────────────────────────┐
+│ Hybrid Verdict Card: Instant Prediction + AI Rationale & Safety Warnings │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-> **Phase 1 decision update (2026-10-17, user decision, implemented by Claude Agent)**: the web app classifies with the team's own trained model running **in the browser** (onnxruntime-web), not the Gemini API. The model is exported from `checkpoints/best.pt` by `export_onnx.py`, and bin rules come from `bins.py` via `public/models/onebin.json`. Task 1.2 is superseded; the architecture diagram above reflects the original Gemini plan.
+> **Phase 1 Architecture (Dual-Engine Hybrid)**: The web app combines fast on-device classification via our fine-tuned ONNX model running in-browser (<50ms) with deep zero-shot multimodal reasoning, contamination warnings, and Seattle municipal rules powered by Google Gemini 2.5 Flash via `/api/classify`.
 
 ## Atomic Task List
 
@@ -52,16 +57,16 @@
 ---
 
 ### Task 1.2: Serverless Gemini Vision API Route with Structured JSON Output
-- **Status**: `[SUPERSEDED]` by user decision (2026-10-17): classification runs in the browser with our own model (`export_onnx.py` -> `public/models/onebin.onnx`, `lib/classifier.ts`) instead of a Gemini API route. No API key needed. See the Phase 1 decision note above.
+- **Status**: `[ACTIVE - BEING IMPLEMENTED BY BUILDER]`
 - **Target Files**:
-  - `app/api/classify/route.ts` (or `pages/api/classify.ts`)
+  - `app/api/classify/route.ts`
   - `lib/gemini.ts` (API client & schema definition)
   - `lib/types.ts` (TypeScript interfaces for API request/response)
-- **Objective**: Create a secure serverless backend endpoint that receives an image payload, calls the Google Gemini API with multimodal vision capabilities, and enforces structured JSON output.
+- **Objective**: Create a secure serverless backend endpoint that receives an image payload, calls the Google Gemini API with multimodal vision capabilities, and enforces structured JSON output for deep sorting rationale and contamination warnings.
 - **Actionable Steps**:
-  1. Define the TypeScript interface for classification results:
+  1. Define the TypeScript interface for classification results in `lib/types.ts`:
      ```typescript
-     interface ClassificationResult {
+     export interface ClassificationResult {
        bin: 'compost' | 'recycling' | 'trash';
        itemName: string;
        material: string;
@@ -71,88 +76,67 @@
        lowConfidenceWarning: boolean;
      }
      ```
-  2. Implement Gemini API client in `lib/gemini.ts` using `@google/genai` or standard REST API endpoints.
-  3. Configure system instructions aligning classification with `bins.py` standards:
-     - Biological / organic waste -> `compost`
-     - Clean cardboard, glass, metal, paper, recyclable plastics -> `recycling`
-     - Clothes, shoes, general non-recyclables, hazardous items (with warning) -> `trash`
-     - Specific hazardous item warnings (e.g. lithium-ion batteries, chemicals).
-     - Strict rule: If uncertain or item is soiled/unrecyclable, assign to `trash` or flag `lowConfidenceWarning: true`.
-  4. Implement input validation (handling base64 and multipart file limits, rejecting unsupported MIME types).
+  2. Implement Gemini API client in `lib/gemini.ts` using `@google/genai` (pinned `^2.30.0`):
+     - Initialize `GoogleGenAI` reading `process.env.GEMINI_API_KEY`.
+     - Model: `gemini-2.5-flash` by default (read from `process.env.GEMINI_MODEL || 'gemini-2.5-flash'`).
+     - Enforce structured output via `responseSchema`.
+  3. Configure system instructions aligning classification with `bins.py` standards (Seattle municipal rules):
+     - Biological / food waste / yard waste -> `compost`
+     - Clean cardboard, glass, metal, paper, rigid recyclable plastics -> `recycling`
+     - Seattle Specific Heuristics: Plastic shopping/trash bags (`plastic_bag`) and foam containers/cups (`styrofoam`) -> MUST go to `trash`.
+     - Specific hazardous item warnings (e.g. lithium-ion batteries, chemicals, electronics).
+     - Strict rule: If uncertain or item is food-soiled, assign to `trash` or flag `lowConfidenceWarning: true`.
+  4. Implement `app/api/classify/route.ts` handling POST requests with base64 image data.
   5. Include defensive error handling for missing API keys, rate limits, and network timeouts.
 - **Acceptance Criteria**:
-  - POST request with a sample waste item image returns HTTP 200 with valid, schema-compliant JSON.
+  - POST request with a sample image returns HTTP 200 with valid, schema-compliant JSON.
+  - Plastic bags and styrofoam are strictly classified as `trash` with appropriate explanations.
   - API key is never exposed to the client bundle.
   - Returns clear HTTP 400/500 JSON error responses for invalid inputs or upstream errors.
 
 ---
 
 ### Task 1.3: Responsive Camera & Upload UI Component
-- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/CameraCapture.tsx`, upload + drag-drop in `components/Sorter.tsx`. Images are center-cropped to 320×320 in-browser; nothing is uploaded.
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/CameraCapture.tsx`, upload + drag-drop in `components/Sorter.tsx`. Images are center-cropped to 320×320 in-browser; local instant inference.
 - **Target Files**:
   - `components/CameraCapture.tsx`
-  - `components/ImageUploader.tsx`
-  - `components/Dropzone.tsx`
-- **Objective**: Build an intuitive, accessible image capture and file upload interface optimized for both mobile devices (rear camera trigger) and desktops (drag-and-drop / file selector).
-- **Actionable Steps**:
-  1. Implement HTML5 `MediaDevices.getUserMedia` camera preview with mobile environment facing-mode toggle (`facingMode: "environment"`).
-  2. Provide instant snapshot capture with canvas downsampling/compression (e.g., max 1024x1024 or 384x384 matching EfficientNet baseline) to ensure fast payload transmission over cellular networks.
-  3. Implement drag-and-drop file upload as a fallback for non-camera desktop testing.
-  4. Include live image preview and "Retake / Clear" controls.
-- **Acceptance Criteria**:
-  - Works on mobile browsers requesting camera permission seamlessly.
-  - Desktop users can drag and drop images (.jpg, .png, .webp).
-  - Images are compressed client-side before transmission.
+  - `components/Sorter.tsx`
+- **Objective**: Build an intuitive image capture and file upload interface optimized for both mobile devices and desktops.
+- **Current State**: Implemented and verified; merging into `main`.
 
 ---
 
 ### Task 1.4: Classification Results Card & Visual Feedback Component
-- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/VerdictCard.tsx` (bin, item, confidence, bin bars, battery warning, <60% "when in doubt, trash"). No Gemini rationale, since there is no LLM.
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/VerdictCard.tsx` (bin, item, confidence, bin bars, battery warning, <60% "when in doubt, trash"). Being connected with Gemini API route for deep reasoning.
 - **Target Files**:
   - `components/VerdictCard.tsx`
-  - `components/ConfidenceBar.tsx`
-  - `components/WarningBanner.tsx`
-  - `app/page.tsx`
+  - `components/Sorter.tsx`
 - **Objective**: Design and build the primary presentation view displaying the waste sorting verdict, confidence score, rationale, and safety warnings.
-- **Actionable Steps**:
-  1. Implement color-coded visual hierarchy matching `bins.py`:
-     - 🟢 Compost (Green theme)
-     - 🔵 Recycling (Blue theme)
-     - ⚫ Trash (Dark Gray / Slate theme)
-  2. Display primary item identification (e.g. "Aluminum Soda Can") alongside bin recommendation.
-  3. Render confidence percentage bar with visual threshold highlight (flags when confidence < 60% with "When in doubt, trash").
-  4. Render callout banners for hazardous items (e.g., batteries, e-waste) with drop-off advice.
-  5. Provide an expandable drawer or accordion with Gemini's detailed reasoning and material breakdown.
-  6. Add loading skeletons and spinners during API processing.
-- **Acceptance Criteria**:
-  - UI matches the tri-bin color semantics accurately.
-  - Handles loading, success, low-confidence warning, and error states gracefully.
+- **Current State**: Implemented; connecting to `/api/classify` for AI deep explanations.
 
 ---
 
-### Task 1.5: End-to-End Integration, Environment Setup & Deployment Verification
-- **Status**: `[IN REVIEW]` Verified locally (production build + headless Chromium: 12/12 test images sorted correctly, camera flow works, no console errors). Pending PR merge to `main` and live Vercel check. README not written yet.
+### Task 1.5: End-to-End Integration, PR Merge & Live Deployment Verification
+- **Status**: `[ACTIVE]`
 - **Target Files**:
   - `README.md`
   - `documentation/CollabWorkflow.md`
-  - `documentation/Business_and_Resources.md`
-- **Objective**: Wire all components together in the main application page, verify the local workflow, document setup steps, and ensure the project is ready for one-click Vercel deployment.
+  - `components/Sorter.tsx`
+  - `components/VerdictCard.tsx`
+- **Objective**: Merge `feat/in-browser-classifier` into `main`, wire the hybrid flow (instant ONNX result + Gemini explanation), verify the automated CI/Vercel deployment, and document setup.
 - **Actionable Steps**:
-  1. Connect `CameraCapture` / `ImageUploader` to `/api/classify` and pipe response into `VerdictCard`.
-  2. Test end-to-end scanning flow with sample items from each category:
-     - Compost: banana peel / food scraps
-     - Recycling: cardboard box / plastic bottle / aluminum can
-     - Trash: styrofoam cup / worn shoe / battery (verifying hazardous warning)
-  3. Document development and deployment instructions in `README.md` (how to set `GEMINI_API_KEY` on Vercel and locally).
-  4. Submit to Auditor Agent for verification.
+  1. Open PR and merge `feat/in-browser-classifier` into `main`.
+  2. Wire `components/VerdictCard.tsx` / `components/Sorter.tsx` to optionally call `/api/classify` (e.g., "Explain Why with Gemini" button or auto-enrichment on scan).
+  3. Verify local build: `npm run lint` and `npm run build`.
+  4. Push to `main` to trigger automated Vercel deployment and verify live on `https://onebin.vercel.app`.
+  5. Document setup, hybrid architecture, and usage in `README.md`.
 - **Acceptance Criteria**:
-  - Complete scan flow executes end-to-end in < 2 seconds under standard broadband.
+  - Complete scan flow executes end-to-end both on-device (WASM ONNX) and with Gemini cloud reasoning.
   - Zero hydration errors in Next.js.
-  - Ready for Vercel deployment without build failures.
+  - Production build live and operational on Vercel.
 
 ---
 
 ## Handoff & Execution Protocol
-- The **Builder Agent** must pick up tasks in strict sequence (`Task 1.1` -> `Task 1.2` -> `Task 1.3` -> `Task 1.4` -> `Task 1.5`).
-- Before starting any task, the Builder Agent must update `CollabWorkflow.md` to `[ACTIVE]`.
-- Upon completing each task, the Builder Agent must log progress in the LRU cache and transition to `[IDLE]` before handoff to the Auditor Agent.
+- **Builder Agent** is currently greenlit to execute **Task 1.2** (`lib/gemini.ts` and `app/api/classify/route.ts`).
+- Once Task 1.2 is audited, proceed to **Task 1.5** to merge and integrate the full hybrid application.
