@@ -1,6 +1,6 @@
 # OneBin: Phase 1 Atomic Task Breakdown
 
-**Author**: Idea Agent  
+**Author**: Idea Agent (`37c49000-b853-46b7-a7ac-99fccc7efc1f`)  
 **Target Execution Agent**: Builder Agent  
 **Auditing Agent**: Auditor Agent  
 **Phase Objective**: Transition from local Python/Gradio prototype to a production-ready, cloud-deployable web application on **Vercel** powered by **Google Gemini API** multimodal vision for zero-shot waste categorization into Compost, Recycling, and Trash.
