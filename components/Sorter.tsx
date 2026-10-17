@@ -6,6 +6,7 @@ import CameraCapture from "@/components/CameraCapture";
 import SerialActuatorModal from "@/components/SerialActuatorModal";
 import StatsModal from "@/components/StatsModal";
 import VerdictCard from "@/components/VerdictCard";
+import { isDatasetOptIn, setDatasetOptIn, uploadDatasetContribution } from "@/lib/blob";
 import { type Classifier, loadClassifier, type Verdict } from "@/lib/classifier";
 import { isSerialConnected } from "@/lib/serial";
 import { logScanEvent } from "@/lib/supabase";
@@ -26,8 +27,10 @@ export default function Sorter() {
   const [showStats, setShowStats] = useState(false);
   const [showSerialModal, setShowSerialModal] = useState(false);
   const [serialActive, setSerialActive] = useState(false);
+  const [datasetOptIn, setDatasetOptInState] = useState(false);
 
   function startLoading() {
+    setDatasetOptInState(isDatasetOptIn());
     setModel({ status: "loading", progress: 0 });
     loadClassifier((progress) => setModel({ status: "loading", progress }))
       .then((c) => {
@@ -59,6 +62,16 @@ export default function Sorter() {
         confidence: res.confidence,
         ms: res.ms,
       });
+
+      // Optional UW Dataset Contribution (Vercel Blob Free Tier)
+      if (datasetOptIn) {
+        uploadDatasetContribution({
+          imageBase64: frame.toDataURL("image/jpeg", 0.6),
+          bin: res.bin,
+          item: res.item,
+          confidence: res.confidence,
+        }).catch(() => {});
+      }
     } catch (err) {
       if (!isAuto) {
         setError(`Classification failed: ${(err as Error).message}`);
@@ -205,6 +218,27 @@ export default function Sorter() {
               e.target.value = ""; // allow picking the same file again
             }}
           />
+        </div>
+      )}
+
+      {/* Dataset Opt-In Toggle (Vercel Blob Storage) */}
+      {!cameraOpen && (
+        <div className="flex items-center justify-center pt-0.5 text-xs text-slate-500">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={datasetOptIn}
+              onChange={(e) => {
+                const val = e.target.checked;
+                setDatasetOptInState(val);
+                setDatasetOptIn(val);
+              }}
+              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 h-3.5 w-3.5"
+            />
+            <span className="text-[11px] text-slate-500">
+              Contribute anonymous photo to UW Dataset (Vercel Blob)
+            </span>
+          </label>
         </div>
       )}
 

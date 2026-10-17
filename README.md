@@ -132,6 +132,14 @@ OneBin supports real-time physical bin actuation via the browser-native **Web Se
 
 ---
 
+## Hackathon Pitch & Free-Tier Presentation Features
+
+- **Live Presentation Dashboard ([`/dashboard`](https://onebin.vercel.app/dashboard))**: A high-impact scoreboard designed for live hackathon pitch projection. As judges scan items on their mobile phones, the stage dashboard updates in real time with live diversion percentage, CO₂ savings, and animated stream cards over WebSockets & BroadcastChannel.
+- **Dynamic Municipality Policy Engine ([`lib/rules.ts`](lib/rules.ts))**: Switch sorting policies on the fly between **Seattle SPU**, **Bellevue**, and **UW Campus** dining rules with sub-15ms dynamic overrides powered by **Vercel Edge Config**.
+- **Open UW Waste Dataset Contribution ([`app/api/contribute/route.ts`](app/api/contribute/route.ts))**: Users can opt in to anonymously contribute item photos to train future UW campus waste models, backed by **Vercel Blob Storage Free Tier**.
+
+---
+
 ## Team & Attribution
 - Project by University of Washington CSE students.
 - Special thanks to Seattle Public Utilities for open waste diversion guidelines.
