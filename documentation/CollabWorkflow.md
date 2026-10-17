@@ -28,7 +28,7 @@
 | Agent | Status | Current Activity / Focus | Last Updated |
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Phase 1 atomic task breakdown authored (`Task_Breakdown.md`); standing by for Phase 2 | 2026-10-17 |
-| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Vercel project "onebin" created and connected to shreyansh-padhy/OneBin; production deployment live at https://onebin.vercel.app. Standing by for Task 1.2 | 2026-10-17 |
+| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Documented Google AI Pro plan, AI Studio, and student developer resources in Business_and_Resources.md. Standing by for Task 1.2 greenlight | 2026-10-17 |
 | **Auditor Agent (`cf506aec`)** | `[IDLE]` | Created AGENTS.md, root CLAUDE.md, and integrated Claude Agent into CollabWorkflow | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | Standing by for interactive CLI tasks; bound to pre-flight check and LRU cache | 2026-10-17 |
 
@@ -39,14 +39,14 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
-| 02 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
-| 03 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
-| 04 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
-| 05 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
-| 06 | 2026-10-17 | System | Relocated CLAUDE.md & REFERENCES.md into documentation/ with updated paths | `documentation/` | Verified & Approved |
-| 07 | 2026-10-17 | System | Initialized documentation architecture (`Business_and_Resources.md`, `CollabWorkflow.md`) | `documentation/` | Verified & Approved |
-| 08 | — | — | — | — | — |
+| 01 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
+| 02 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
+| 03 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
+| 04 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
+| 05 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
+| 06 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
+| 07 | 2026-10-17 | System | Relocated CLAUDE.md & REFERENCES.md into documentation/ with updated paths | `documentation/` | Verified & Approved |
+| 08 | 2026-10-17 | System | Initialized documentation architecture (`Business_and_Resources.md`, `CollabWorkflow.md`) | `documentation/` | Verified & Approved |
 | 09 | — | — | — | — | — |
 | 10 | — | — | — | — | — |
 
