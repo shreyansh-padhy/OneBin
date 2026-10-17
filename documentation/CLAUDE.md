@@ -29,14 +29,14 @@ There is no test suite. `train.py` reports accuracy on a held-out test split whe
 
 The model predicts **10 fine-grained classes**. Bins are a separate mapping layered on top: fine-class softmax probabilities are summed into bin probabilities. This separation is the core design idea.
 
-- [bins.py](bins.py) is the single source of truth for bins:
+- [bins.py](../bins.py) is the single source of truth for bins:
   - `BIN_OF` maps each class name to a bin.
   - `BINS` is the ordered bin list (`compost`, `recycling`, `trash`).
   - `BIN_DISPLAY` gives each bin its UI label.
   - `WARN` holds extra warnings shown for a predicted class regardless of bin (e.g. battery).
 
   Edit this file to match local disposal rules; changing it needs **no retraining**. Every dataset class must be a key in `BIN_OF`, and every bin it maps to must be in `BINS`.
-- [train.py](train.py) also serves as the shared library that `app.py` imports:
+- [train.py](../train.py) also serves as the shared library that `app.py` imports:
   - `make_transforms(size)` returns `(train_tf, eval_tf)`.
   - `build_model(n, pretrained)` creates EfficientNetV2-S with an n-way classification head.
   - `bin_matrix(classes)` builds the 0/1 `(num_classes, len(BINS))` matrix, so `probs @ M` gives bin probabilities.
@@ -46,7 +46,7 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
   - Checkpoint selection uses **validation 3-bin accuracy**, not 10-class accuracy.
   - The checkpoint format is `{"model": state_dict, "classes": [...], "size": int}`.
   - Uses AdamW, OneCycleLR, label smoothing 0.1, and AMP when CUDA is available.
-- [app.py](app.py): loads the checkpoint at import time. It rebuilds `eval_tf` with the checkpoint's `size` and the model with `build_model`. It computes bin probabilities with `bin_matrix`, then appends `WARN` text and, below `LOW_CONFIDENCE` (0.6), a "when in doubt, trash" note.
+- [app.py](../app.py): loads the checkpoint at import time. It rebuilds `eval_tf` with the checkpoint's `size` and the model with `build_model`. It computes bin probabilities with `bin_matrix`, then appends `WARN` text and, below `LOW_CONFIDENCE` (0.6), a "when in doubt, trash" note.
 
 ## Conventions and gotchas
 
