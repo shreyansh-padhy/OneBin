@@ -1,5 +1,6 @@
 // OneBin Sustainability Impact & Scan Telemetry
-// Dual-layer: logs locally via localStorage and optionally syncs with Supabase free-tier REST API.
+// Dual-layer: logs locally via localStorage, BroadcastChannel for zero-latency screen syncing,
+// and optionally syncs with Supabase free-tier PostgreSQL & Realtime WebSockets.
 
 export interface ScanEvent {
   id?: string;
@@ -21,6 +22,7 @@ export interface ImpactStats {
 
 const STORAGE_KEY = "onebin_scan_history";
 const MAX_LOCAL_EVENTS = 100;
+const CHANNEL_NAME = "onebin_live_scans";
 
 export function getLocalScanHistory(): ScanEvent[] {
   if (typeof window === "undefined") return [];
@@ -53,9 +55,21 @@ export async function logScanEvent(event: {
     } catch (err) {
       console.warn("[OneBin Telemetry] Failed to write localStorage:", err);
     }
+
+    // 2. BroadcastChannel for instant zero-latency cross-tab/stage display syncing
+    try {
+      if ("BroadcastChannel" in window) {
+        const bc = new BroadcastChannel(CHANNEL_NAME);
+        bc.postMessage(fullEvent);
+        bc.close();
+      }
+      window.dispatchEvent(new CustomEvent("onebin:scan", { detail: fullEvent }));
+    } catch (err) {
+      console.warn("[OneBin Telemetry] Broadcast failed:", err);
+    }
   }
 
-  // 2. Supabase Free Tier REST Sync (if configured)
+  // 3. Supabase Free Tier REST Sync (if configured)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -81,6 +95,78 @@ export async function logScanEvent(event: {
       console.warn("[OneBin Telemetry] Supabase sync skipped:", err);
     }
   }
+}
+
+export function subscribeToLiveScans(onScan: (event: ScanEvent) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  // BroadcastChannel listener (cross-tab on same device or presentation screen)
+  let bc: BroadcastChannel | null = null;
+  if ("BroadcastChannel" in window) {
+    bc = new BroadcastChannel(CHANNEL_NAME);
+    bc.onmessage = (msg) => {
+      if (msg.data) onScan(msg.data);
+    };
+  }
+
+  // In-tab CustomEvent listener
+  const customHandler = (e: Event) => {
+    const ce = e as CustomEvent<ScanEvent>;
+    if (ce.detail) onScan(ce.detail);
+  };
+  window.addEventListener("onebin:scan", customHandler);
+
+  // Storage event listener (fires when other tabs update localStorage)
+  const storageHandler = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          onScan(parsed[0]);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  };
+  window.addEventListener("storage", storageHandler);
+
+  return () => {
+    if (bc) bc.close();
+    window.removeEventListener("onebin:scan", customHandler);
+    window.removeEventListener("storage", storageHandler);
+  };
+}
+
+export async function fetchRecentScans(): Promise<ScanEvent[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/scans?select=*&order=created_at.desc&limit=50`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+        },
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        return rows.map((r: { id: string; bin: string; item: string; confidence: number; created_at: string; ms?: number }) => ({
+          id: r.id,
+          bin: r.bin,
+          item: r.item,
+          confidence: r.confidence,
+          timestamp: r.created_at,
+          ms: r.ms,
+        }));
+      }
+    } catch (err) {
+      console.warn("[OneBin Telemetry] Supabase fetch failed, falling back to local:", err);
+    }
+  }
+
+  return getLocalScanHistory();
 }
 
 export function computeImpactStats(history: ScanEvent[]): ImpactStats {
