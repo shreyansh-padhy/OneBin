@@ -5,13 +5,14 @@
 
 ---
 
-## 2. Agent Roles & Responsibilities
+### 2. Agent Roles & Responsibilities
 
 | Agent | Instance / Chat ID | Primary Role | Core Responsibilities |
 |---|---|---|---|
 | **Idea Agent** | `37c49000-b853-46b7-a7ac-99fccc7efc1f` | Specification & Phase Architect | Analyzes high-level objectives, decomposes requirements into sequential phases, and authors granular, atomic task specifications with strict acceptance criteria. |
 | **Builder Agent** | `6b28e153-9c67-43e2-9145-db22583f6d71` | Implementation Engineer | Reads atomic task specifications from the Idea Agent, follows established architectural patterns, writes concise production-ready code, and documents changes. |
 | **Auditor Agent** | `cf506aec-8778-4065-af52-8112e7feeff2` | Quality & Verification Inspector | Reviews documentation for gaps, inefficiencies, or faulty logic; rigorously cross-examines the Builder Agent's code against **BOTH** the original project requirements and the Idea Agent's atomic tasks; reports verified passes or concrete failures. |
+| **Claude Agent** | — | Interactive Paired Developer & CLI Assistant | Operates via Claude Code / Anthropic interfaces; executes paired implementation, debugging, and terminal workflows; adheres strictly to the mandatory pre-flight check and LRU ledger protocol. |
 
 ---
 
@@ -28,7 +29,8 @@
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Phase 1 atomic task breakdown authored (`Task_Breakdown.md`); standing by for Phase 2 | 2026-10-17 |
 | **Builder Agent (`6b28e153`)** | `[IDLE]` | Completed Task 1.1 (Next.js 15, Tailwind, Vercel, CI/CD, PR #1 merged). Standing by for Task 1.2 greenlight | 2026-10-17 |
-| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Audit of Task_Breakdown.md complete; awaiting Task 1.1 implementation | 2026-10-17 |
+| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Created AGENTS.md, root CLAUDE.md, and integrated Claude Agent into CollabWorkflow | 2026-10-17 |
+| **Claude Agent** | `[IDLE]` | Standing by for interactive CLI tasks; bound to pre-flight check and LRU cache | 2026-10-17 |
 
 ---
 
@@ -37,12 +39,12 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
-| 02 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
-| 03 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
-| 04 | 2026-10-17 | System | Relocated CLAUDE.md & REFERENCES.md into documentation/ with updated paths | `documentation/` | Verified & Approved |
-| 05 | 2026-10-17 | System | Initialized documentation architecture (`Business_and_Resources.md`, `CollabWorkflow.md`) | `documentation/` | Verified & Approved |
-| 06 | — | — | — | — | — |
+| 01 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
+| 02 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
+| 03 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
+| 04 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
+| 05 | 2026-10-17 | System | Relocated CLAUDE.md & REFERENCES.md into documentation/ with updated paths | `documentation/` | Verified & Approved |
+| 06 | 2026-10-17 | System | Initialized documentation architecture (`Business_and_Resources.md`, `CollabWorkflow.md`) | `documentation/` | Verified & Approved |
 | 07 | — | — | — | — | — |
 | 08 | — | — | — | — | — |
 | 09 | — | — | — | — | — |
@@ -96,4 +98,26 @@
   - Local `npm run build`: Production build generated in 7.9s with 0 errors.
   - GitHub Actions Workflow: Successfully passed both jobs (`Lint & Build Verification`) on PR #1.
 - **Status & Next Steps**: Task 1.1 complete and merged to `main`. Builder status reverted to `[IDLE]`. Ready for Auditor inspection and Task 1.2 greenlight.
+
+---
+
+## 7. Claude Agent Protocol & Integration
+
+The **Claude Agent** operates through Anthropic / Claude Code environments and serves as an interactive paired developer, code reviewer, and debugging specialist. To preserve system integrity across multiple agents, Claude is subject to the identical state machine and ledger rules:
+
+### Mandatory Rules for Claude Agent:
+1. **Pre-Flight Inspection**:
+   - Claude must inspect `documentation/CollabWorkflow.md` and `documentation/Task_Breakdown.md` upon session startup.
+   - Claude must confirm which tasks are currently `[ACTIVE]` and ensure no conflicting work is in progress.
+2. **State Claiming**:
+   - Before editing or implementing code, Claude must update **Current Agent States** in `CollabWorkflow.md`:
+     `| **Claude Agent** | [ACTIVE] | <transparent description of task> | <date> |`
+3. **Strict LRU Cache Protocol**:
+   - Every completed task, bug fix, or refactor executed by Claude MUST be logged at Index `01` of the **Recent Actions Log (LRU Cache)**.
+   - Claude must push older entries down and maintain the rolling 10-slot limit.
+   - The log entry must list the exact files touched, the nature of the change, and whether it has been verified.
+4. **Post-Flight Reversion**:
+   - Upon completing the task, Claude must reset its state in `CollabWorkflow.md` back to `[IDLE]`.
+5. **Git Hygiene**:
+   - Claude must commit with conventional commit messages (`feat:`, `fix:`, `docs:`, `chore:`) and push to remote.
 
