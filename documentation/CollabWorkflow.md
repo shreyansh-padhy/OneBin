@@ -30,7 +30,7 @@
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Phase 1 atomic task breakdown authored (`Task_Breakdown.md`); standing by for Phase 2 | 2026-10-17 |
 | **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Standing by on Vercel deployment while teammate configures project setup; greenlit for Task 1.2 code | 2026-10-17 |
 | **Auditor Agent (`cf506aec`)** | `[IDLE]` | Terminated 2 background Vercel polling tasks; noted teammate-led Vercel configuration | 2026-10-17 |
-| **Claude Agent** | `[IDLE]` | Standing by for interactive CLI tasks; bound to pre-flight check and LRU cache | 2026-10-17 |
+| **Claude Agent** | `[ACTIVE]` | Replacing Tasks 1.2–1.5 Gemini plan (user decision): exporting best.pt to ONNX and building in-browser classifier (camera/upload UI + verdict card) with onnxruntime-web on branch `feat/in-browser-classifier` | 2026-10-17 |
 
 ---
 
