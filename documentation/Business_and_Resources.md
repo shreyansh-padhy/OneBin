@@ -27,6 +27,17 @@ The project is built by a two-person human engineering team:
 | **Frontend & Presentation** | [Vercel](https://vercel.com/) | Cloud hosting, frontend presentation layer, fast global CDN, and serverless API proxying. |
 | **Baseline Machine Learning** | PyTorch / EfficientNetV2-S / Gradio | Local ML baseline and evaluation pipeline (`train.py`, `bins.py`, `app.py`) classifying across 10 fine-grained categories mapped to the 3 bins. |
 
+### 3.1 Google AI & Student Resource Entitlements
+
+The team is equipped with premier developer and student resource tiers that provide high-throughput AI infrastructure with zero infrastructure costs:
+
+| Resource Tier | Access Level & Features | Hackathon & Deployment Benefit |
+|---|---|---|
+| **Google AI Pro Plan** | • Premium access to Google's flagship reasoning models (Gemini 2.5 Pro, Gemini 2.5 Flash)<br>• Extended multimodal context windows (audio, video, high-res images)<br>• Prioritized latency and enhanced API throughput | Unlocks high-fidelity image classification with complex reasoning, edge-case disambiguation (e.g., distinguishing soiled vs. clean cardboard), and rapid inference under judging conditions. |
+| **Google AI Studio (Student / Free Tier)** | • Free developer console for model configuration & system instruction tuning<br>• Native Structured Outputs (`responseSchema` with strict JSON validation)<br>• Zero-cost API key provisioning and prompt caching capabilities | Enables direct testing and prompt iteration before deployment; guarantees schema compliance without third-party validation overhead. |
+| **GitHub Student Developer Pack** | • Unlimited private repositories and GitHub Actions CI/CD automation<br>• Branch protection rules, pull request status checks, and automated audit trails | Enforces strict code quality and multi-agent coordination without running out of CI minutes. |
+| **Vercel Cloud (Student / Developer Tier)** | • Unlimited preview deployments for pull requests<br>• Zero-config Next.js serverless functions with edge routing<br>• Custom domains and SSL (`https://onebin.vercel.app`) | Provides instantaneous global demo delivery with zero cold-start concerns for judges. |
+
 ---
 
 ## 4. Backend Database Scope Evaluation (Supabase) [Placeholder]
