@@ -1,14 +1,17 @@
 "use client";
 
-import { Camera, Loader2, RotateCcw, Upload } from "lucide-react";
+import { BarChart3, Camera, Cpu, Loader2, RotateCcw, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/CameraCapture";
+import StatsModal from "@/components/StatsModal";
 import VerdictCard from "@/components/VerdictCard";
 import { type Classifier, loadClassifier, type Verdict } from "@/lib/classifier";
+import { connectSerial, isSerialConnected, isSerialSupported } from "@/lib/serial";
+import { logScanEvent } from "@/lib/supabase";
 
 type ModelState = { status: "loading"; progress: number | null } | { status: "ready" } | { status: "error"; message: string };
 
-/** Camera / upload -> in-browser model -> verdict. */
+/** Camera / upload -> in-browser model -> verdict with Auto-Scan, Telemetry & IoT. */
 export default function Sorter() {
   const classifier = useRef<Classifier | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -19,6 +22,9 @@ export default function Sorter() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [serialActive, setSerialActive] = useState(false);
+  const [serialNotice, setSerialNotice] = useState<string | null>(null);
 
   function startLoading() {
     setModel({ status: "loading", progress: 0 });
@@ -31,17 +37,31 @@ export default function Sorter() {
   }
   useEffect(startLoading, []);
 
-  async function classify(frame: HTMLCanvasElement) {
-    setCameraOpen(false);
-    setPhoto(frame.toDataURL("image/jpeg", 0.85));
-    setVerdict(null);
+  async function classify(frame: HTMLCanvasElement, isAuto = false) {
+    if (!isAuto) {
+      setCameraOpen(false);
+      setPhoto(frame.toDataURL("image/jpeg", 0.85));
+      setVerdict(null);
+    }
     setError(null);
     setBusy(true);
+
     try {
       const c = classifier.current ?? (await loadClassifier());
-      setVerdict(await c.classify(frame, frame.width, frame.height));
+      const res = await c.classify(frame, frame.width, frame.height);
+      setVerdict(res);
+
+      // Log telemetry event (local history + optional Supabase sync)
+      logScanEvent({
+        bin: res.bin,
+        item: res.item,
+        confidence: res.confidence,
+        ms: res.ms,
+      });
     } catch (err) {
-      setError(`Classification failed: ${(err as Error).message}`);
+      if (!isAuto) {
+        setError(`Classification failed: ${(err as Error).message}`);
+      }
     } finally {
       setBusy(false);
     }
@@ -57,9 +77,26 @@ export default function Sorter() {
       canvas.height = bitmap.height;
       canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
       bitmap.close();
-      await classify(canvas);
+      await classify(canvas, false);
     } catch {
       setError("Couldn't read that image. Try a .jpg, .png or .webp photo.");
+    }
+  }
+
+  async function handleConnectSerial() {
+    if (!isSerialSupported()) {
+      setSerialNotice("Web Serial is only supported in Chrome or Edge browsers.");
+      setTimeout(() => setSerialNotice(null), 4000);
+      return;
+    }
+    try {
+      await connectSerial(9600);
+      setSerialActive(isSerialConnected());
+      setSerialNotice("Connected to Arduino/ESP32 Smart Bin!");
+      setTimeout(() => setSerialNotice(null), 3000);
+    } catch {
+      setSerialNotice("Serial connection cancelled or failed.");
+      setTimeout(() => setSerialNotice(null), 3000);
     }
   }
 
@@ -73,6 +110,37 @@ export default function Sorter() {
 
   return (
     <div className="space-y-4">
+      {/* Top Utility Controls (Impact Stats & IoT Bin Actuation) */}
+      <div className="flex items-center justify-between gap-2 px-1 text-xs">
+        <button
+          type="button"
+          onClick={() => setShowStats(true)}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+        >
+          <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
+          <span>Impact Stats</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleConnectSerial}
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
+            serialActive
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+              : "border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
+          }`}
+        >
+          <Cpu className={`h-3.5 w-3.5 ${serialActive ? "text-emerald-600 animate-pulse" : "text-slate-500"}`} />
+          <span>{serialActive ? "IoT Bin Connected" : "Connect Smart Bin"}</span>
+        </button>
+      </div>
+
+      {serialNotice && (
+        <p className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-center text-xs text-slate-700 animate-in fade-in">
+          {serialNotice}
+        </p>
+      )}
+
       {model.status === "loading" && (
         <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
           <div className="flex items-center gap-2">
@@ -164,10 +232,13 @@ export default function Sorter() {
 
       {busy && !ready && <p className="text-center text-sm text-slate-500">Waiting for the model to finish loading…</p>}
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+      
+      {/* Live Verdict Display (works both in manual photo preview and in live Auto-Scan mode) */}
       {verdict && classifier.current && (
         <VerdictCard verdict={verdict} meta={classifier.current.meta} photo={photo} />
       )}
-      {(verdict || error) && (
+
+      {(verdict || error) && !cameraOpen && (
         <button
           type="button"
           onClick={reset}
@@ -176,6 +247,9 @@ export default function Sorter() {
           <RotateCcw className="h-4 w-4" /> Sort another item
         </button>
       )}
+
+      {/* Sustainability Impact Telemetry Modal */}
+      {showStats && <StatsModal onClose={() => setShowStats(false)} />}
     </div>
   );
 }

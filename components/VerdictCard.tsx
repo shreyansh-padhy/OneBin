@@ -1,7 +1,9 @@
 "use client";
 
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Cpu, Info, Volume2, VolumeX } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
+import { isSerialConnected, sendBinCommand } from "@/lib/serial";
 
 // Full class names so Tailwind keeps them (colors are defined in tailwind.config.ts).
 const BIN_STYLE: Record<string, { card: string; bar: string; text: string }> = {
@@ -37,15 +39,100 @@ export default function VerdictCard({
   photo?: string | null;
 }) {
   const style = BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash;
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [speaking, setSpeaking] = useState(false);
+  const [iotFired, setIotFired] = useState(false);
+
+  // Native Web Speech synthesis readout (zero external API keys)
+  const speakVerdict = useCallback(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel(); // Stop any active speech
+
+    const binName = verdict.bin.charAt(0).toUpperCase() + verdict.bin.slice(1);
+    const itemName = itemLabel(verdict.item);
+    let speechText = `${binName}! Looks like ${itemName}.`;
+
+    if (verdict.warnings.length > 0) {
+      speechText += ` Warning: ${verdict.warnings[0]}`;
+    } else if (verdict.lowConfidence) {
+      speechText += ` Low confidence. When in doubt, put it in the trash.`;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    utterance.rate = 1.05;
+    utterance.pitch = 1.0;
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
+  }, [verdict]);
+
+  // Trigger speech on new verdict if enabled
+  useEffect(() => {
+    if (voiceEnabled) {
+      speakVerdict();
+    }
+  }, [verdict, voiceEnabled, speakVerdict]);
+
+  // IoT Web Serial actuation: automatically send command if serial port is open
+  useEffect(() => {
+    if (isSerialConnected()) {
+      sendBinCommand(verdict.bin).then((success) => {
+        if (success) {
+          setIotFired(true);
+          setTimeout(() => setIotFired(false), 2000);
+        }
+      });
+    }
+  }, [verdict]);
 
   return (
     <section aria-live="polite" className={`space-y-4 rounded-2xl border-2 p-5 ${style.card}`}>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Put it in</p>
-        <h2 className={`text-3xl font-extrabold ${style.text}`}>{meta.binDisplay[verdict.bin] ?? verdict.bin}</h2>
-        <p className="mt-1 text-sm text-slate-700">
-          Looks like: <span className="font-semibold">{itemLabel(verdict.item)}</span> · {pct(verdict.confidence)} sure
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Put it in</p>
+          <h2 className={`text-3xl font-extrabold ${style.text}`}>{meta.binDisplay[verdict.bin] ?? verdict.bin}</h2>
+          <p className="mt-1 text-sm text-slate-700">
+            Looks like: <span className="font-semibold">{itemLabel(verdict.item)}</span> · {pct(verdict.confidence)} sure
+          </p>
+        </div>
+
+        {/* Audio Speech Controls */}
+        <div className="flex items-center gap-1.5">
+          {iotFired && (
+            <span className="flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white animate-pulse">
+              <Cpu className="h-3 w-3" /> Lid Opened
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (speaking) {
+                window.speechSynthesis?.cancel();
+                setSpeaking(false);
+              } else {
+                speakVerdict();
+              }
+            }}
+            title={speaking ? "Stop voice" : "Speak verdict"}
+            className="rounded-full bg-white/80 p-2 text-slate-700 shadow-sm hover:bg-white hover:text-slate-900 transition-colors"
+          >
+            <Volume2 className={`h-4 w-4 ${speaking ? "text-emerald-600 animate-bounce" : ""}`} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (voiceEnabled) window.speechSynthesis?.cancel();
+              setVoiceEnabled(!voiceEnabled);
+            }}
+            title={voiceEnabled ? "Mute automatic voice" : "Enable automatic voice"}
+            className="rounded-full bg-white/80 p-2 text-slate-500 shadow-sm hover:bg-white hover:text-slate-900 transition-colors"
+          >
+            {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-slate-400" />}
+          </button>
+        </div>
       </div>
 
       {verdict.warnings.map((w) => (
