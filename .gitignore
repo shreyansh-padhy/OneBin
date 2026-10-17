@@ -31,7 +31,8 @@ Thumbs.db
 
 # Python & Baseline ML
 __pycache__/
-checkpoints/
+checkpoints/*
+!checkpoints/best.pt
 *.log
 real/
 *.pyc
