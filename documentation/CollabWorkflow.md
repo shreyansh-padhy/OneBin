@@ -27,9 +27,9 @@
 
 | Agent | Status | Current Activity / Focus | Last Updated |
 |---|---|---|---|
-| **Idea Agent (`37c49000`)** | `[IDLE]` | Phase 1 atomic task breakdown authored (`Task_Breakdown.md`); standing by for Phase 2 | 2026-10-17 |
+| **Idea Agent (`37c49000`)** | `[ACTIVE]` | Assessing completed deliverables across branches & updating Task_Breakdown.md with next atomic tasks | 2026-10-17 |
 | **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Standing by on Vercel deployment while teammate configures project setup; greenlit for Task 1.2 code | 2026-10-17 |
-| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Terminated 2 background Vercel polling tasks; noted teammate-led Vercel configuration | 2026-10-17 |
+| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (dataset expansion, Seattle 12-class taxonomy) | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | Standing by for interactive CLI tasks; bound to pre-flight check and LRU cache | 2026-10-17 |
 
 ---
@@ -39,20 +39,43 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Auditor (`cf506aec`) | Terminated 2 hanging background tasks (curl/Invoke-WebRequest); paused Vercel modifications while teammate configures | System / Vercel | Cleaned & Noted |
-| 02 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
-| 03 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
-| 04 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
-| 05 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
-| 06 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
-| 07 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
-| 08 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
-| 09 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
-| 10 | 2026-10-17 | System | Relocated CLAUDE.md & REFERENCES.md into documentation/ with updated paths | `documentation/` | Verified & Approved |
+| 01 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (4-dataset aggregator, Seattle 12-class taxonomy); updated Task 1.2 with Seattle rules | `bins.py`, `import_data.py`, `train.py`, `documentation/Task_Breakdown.md` | Verified & Approved |
+| 02 | 2026-10-17 | Auditor (`cf506aec`) | Terminated 2 hanging background tasks (curl/Invoke-WebRequest); paused Vercel modifications while teammate configures | System / Vercel | Cleaned & Noted |
+| 03 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
+| 04 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
+| 05 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
+| 06 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
+| 07 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
+| 08 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
+| 09 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
+| 10 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 1 atomic task specifications (Tasks 1.1 - 1.5) for Next.js/Vercel + Gemini API | `documentation/Task_Breakdown.md` | Complete & Audited |
 
 ---
 
 ## 5. Auditor Verification Protocol & Audit Findings
+
+### Audit Report #3: Dataset Expansion & Seattle Taxonomy Audit (Auditor `cf506aec-8778-4065-af52-8112e7feeff2`)
+- **Subject of Audit**: Commit `f35e0b7` authored by `shpadhy` and co-authored by Claude Opus 5.5 (`noreply@anthropic.com`), expanding the dataset, training pipeline, and Seattle disposal taxonomy.
+- **Components Inspected & Verified**:
+  1. *Taxonomy Expansion in `bins.py`*:
+     - Added 2 new classes: `"plastic_bag": "trash"` and `"styrofoam": "trash"`.
+     - Matches official Seattle Public Utilities rules (plastic bags tangle sorting machinery at recycling centers; styrofoam must be landfilled or specialized drop-off).
+     - Verified backward compatibility with `app.py`: `bin_matrix(classes)` dynamically maps each class in the model checkpoint to `BIN_OF[c]`, preserving support for both 10-class legacy and 12-class updated checkpoints.
+  2. *Dataset Pipeline (`import_data.py`)*:
+     - Implements multi-source aggregation combining 4 public benchmarks (Garbage Dataset, Recyclable and Household Waste, RealWaste, Waste Classification).
+     - Employs 256-bit difference hashing (`dhash`) to prevent cross-dataset image leakage and duplicates.
+     - Auto-generates attribution ledger in `data/combined/SOURCES.md`.
+  3. *Training Script Enhancements (`train.py`)*:
+     - Stratifies splits by `(source, class)` to maintain benchmark representation across train/val/test splits.
+     - Replaces fixed sampling count with `--epoch-size` (default 12,000) for uniform class balancing via `WeightedRandomSampler`.
+     - Added per-source 3-bin accuracy evaluation reporting.
+  4. *Specification Sync (`Task_Breakdown.md`)*:
+     - Auditor updated Task 1.2 system instructions to explicitly require Seattle heuristics for Gemini (plastic bags and styrofoam must be classified as `trash`, not `recycling`).
+- **Verdict**:
+  - **Commit `f35e0b7` is fully verified and approved.**
+  - **Task 1.2 is aligned and ready for Builder execution.**
+
+---
 
 ### Audit Report #2: Task 1.1 Scaffolding, Live Vercel Audit & AI Pro Plan Alignment (Auditor `cf506aec-8778-4065-af52-8112e7feeff2`)
 - **Documentation Pre-Flight Check**:
