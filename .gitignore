@@ -1,4 +1,37 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js build output
+/.next/
+/out/
+
+# Production build artifacts
+/build
+dist/
+
+# Environment files
+.env*
+!.env.example
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Python & Baseline ML
 __pycache__/
 checkpoints/
 *.log
 real/
+*.pyc
