@@ -50,6 +50,8 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
 
 ## Conventions and gotchas
 
+- [REFERENCES.md](REFERENCES.md) lists every source we use (the dataset, papers and libraries). When you adopt a new dataset, model, method or library, add its citation there.
+
 - Train and inference must share preprocessing and model construction. Always go through `make_transforms`, `build_model` and `bin_matrix` instead of duplicating them, and take the image size from the checkpoint rather than hardcoding it.
 - The class order comes from `ImageFolder` (alphabetical folder names) and is stored in the checkpoint. Don't hardcode class indices.
 - Importing `train.py` must stay cheap: training only runs under `main()`, so keep heavy work out of module scope there.
