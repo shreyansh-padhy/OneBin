@@ -3,10 +3,11 @@
 import { BarChart3, Camera, Cpu, Loader2, RotateCcw, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import CameraCapture from "@/components/CameraCapture";
+import SerialActuatorModal from "@/components/SerialActuatorModal";
 import StatsModal from "@/components/StatsModal";
 import VerdictCard from "@/components/VerdictCard";
 import { type Classifier, loadClassifier, type Verdict } from "@/lib/classifier";
-import { connectSerial, isSerialConnected, isSerialSupported } from "@/lib/serial";
+import { isSerialConnected } from "@/lib/serial";
 import { logScanEvent } from "@/lib/supabase";
 
 type ModelState = { status: "loading"; progress: number | null } | { status: "ready" } | { status: "error"; message: string };
@@ -23,8 +24,8 @@ export default function Sorter() {
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showSerialModal, setShowSerialModal] = useState(false);
   const [serialActive, setSerialActive] = useState(false);
-  const [serialNotice, setSerialNotice] = useState<string | null>(null);
 
   function startLoading() {
     setModel({ status: "loading", progress: 0 });
@@ -83,23 +84,6 @@ export default function Sorter() {
     }
   }
 
-  async function handleConnectSerial() {
-    if (!isSerialSupported()) {
-      setSerialNotice("Web Serial is only supported in Chrome or Edge browsers.");
-      setTimeout(() => setSerialNotice(null), 4000);
-      return;
-    }
-    try {
-      await connectSerial(9600);
-      setSerialActive(isSerialConnected());
-      setSerialNotice("Connected to Arduino/ESP32 Smart Bin!");
-      setTimeout(() => setSerialNotice(null), 3000);
-    } catch {
-      setSerialNotice("Serial connection cancelled or failed.");
-      setTimeout(() => setSerialNotice(null), 3000);
-    }
-  }
-
   function reset() {
     setPhoto(null);
     setVerdict(null);
@@ -123,7 +107,7 @@ export default function Sorter() {
 
         <button
           type="button"
-          onClick={handleConnectSerial}
+          onClick={() => setShowSerialModal(true)}
           className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
             serialActive
               ? "border-emerald-300 bg-emerald-50 text-emerald-800"
@@ -134,12 +118,6 @@ export default function Sorter() {
           <span>{serialActive ? "IoT Bin Connected" : "Connect Smart Bin"}</span>
         </button>
       </div>
-
-      {serialNotice && (
-        <p className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-center text-xs text-slate-700 animate-in fade-in">
-          {serialNotice}
-        </p>
-      )}
 
       {model.status === "loading" && (
         <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
@@ -250,6 +228,16 @@ export default function Sorter() {
 
       {/* Sustainability Impact Telemetry Modal */}
       {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+
+      {/* Physical IoT Smart Bin Actuation Modal */}
+      {showSerialModal && (
+        <SerialActuatorModal
+          onClose={() => {
+            setShowSerialModal(false);
+            setSerialActive(isSerialConnected());
+          }}
+        />
+      )}
     </div>
   );
 }

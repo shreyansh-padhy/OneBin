@@ -58,6 +58,7 @@ export async function sendBinCommand(bin: string): Promise<boolean> {
   if (bin === "compost") cmd = "C\n";
   else if (bin === "recycling") cmd = "R\n";
   else if (bin === "trash") cmd = "T\n";
+  else if (bin === "close_all") cmd = "X\n";
 
   try {
     const encoder = new TextEncoder();

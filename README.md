@@ -119,6 +119,19 @@ OneBin is continuously deployed to **Vercel** via GitHub Actions:
 
 ---
 
+## Physical IoT Smart Bin Actuation (Web Serial API)
+
+OneBin supports real-time physical bin actuation via the browser-native **Web Serial API**:
+- **Zero Drivers / Plugins**: Plug an Arduino Uno/Nano or ESP32 into your computer via USB (or pair via Bluetooth Serial), and tap **"Connect Smart Bin"** in the web app.
+- **Microcontroller Protocol (9600 Baud)**:
+  - `'C\n'` $\rightarrow$ Pops open the **Compost Lid (🟢 Green)** on Pin 9
+  - `'R\n'` $\rightarrow$ Pops open the **Recycling Lid (🔵 Blue)** on Pin 10
+  - `'T\n'` $\rightarrow$ Pops open the **Trash Lid (⚫ Black)** on Pin 11
+  - `'X\n'` $\rightarrow$ Immediately closes all lids
+- **Firmware Included**: See [`firmware/arduino_bins.ino`](firmware/arduino_bins.ino) for the complete, plug-and-play Arduino/ESP32 sketch with automatic 4-second lid closure.
+
+---
+
 ## Team & Attribution
 - Project by University of Washington CSE students.
 - Special thanks to Seattle Public Utilities for open waste diversion guidelines.
