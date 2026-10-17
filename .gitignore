@@ -41,3 +41,6 @@ data/**
 !data/
 !data/combined/
 !data/combined/SOURCES.md
+
+# onnxruntime-web runtime (copied from node_modules by scripts/copy-ort-wasm.mjs)
+/public/ort/

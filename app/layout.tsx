@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "OneBin - AI Waste Classification",
-  description: "Instant multimodal waste sorting into Compost, Recycling, and Trash powered by Gemini.",
+  description: "Point your camera at an item and find out if it goes in compost, recycling, or trash. Runs entirely in your browser.",
 };
 
 export default function RootLayout({

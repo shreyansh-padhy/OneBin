@@ -4,11 +4,19 @@ This file gives Claude Code (claude.ai/code) guidance for working in this reposi
 
 ## Project
 
-**One Bin** is an image classifier that tells you whether an item goes in **compost, recycling, or trash**. It fine-tunes EfficientNetV2-S on the 10-class Garbage Classification v2 dataset. A Gradio app serves predictions from a webcam or an uploaded photo.
+**One Bin** is an image classifier that tells you whether an item goes in **compost, recycling, or trash**. It fine-tunes EfficientNetV2-S on the 10-class Garbage Classification v2 dataset. A Gradio app serves predictions from a webcam or an uploaded photo. The public website (Next.js on Vercel, https://onebin.vercel.app) runs the same model **in the browser** with onnxruntime-web.
 
 ## Commands
 
 ```bash
+# Web app (Node 20+). predev/prebuild copy the onnxruntime-web WASM runtime into public/ort/
+npm install && npm run dev        # or: npm run lint && npm run build
+
+# After retraining: re-export the browser model (public/models/onebin.onnx + onebin.json).
+# Verifies ONNX vs PyTorch on test images and refuses to finish if they disagree.
+# Needs: pip install onnx onnxruntime onnxscript onnxconverter-common
+python export_onnx.py
+
 # Train (writes checkpoints/best.pt, prints test accuracy and a 3x3 bin confusion matrix)
 python train.py
 
@@ -47,6 +55,14 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
   - The checkpoint format is `{"model": state_dict, "classes": [...], "size": int}`.
   - Uses AdamW, OneCycleLR, label smoothing 0.1, and AMP when CUDA is available.
 - [app.py](../app.py): loads the checkpoint at import time. It rebuilds `eval_tf` with the checkpoint's `size` and the model with `build_model`. It computes bin probabilities with `bin_matrix`, then appends `WARN` text and, below `LOW_CONFIDENCE` (0.6), a "when in doubt, trash" note.
+
+### Web app (in-browser inference)
+
+- [export_onnx.py](../export_onnx.py) writes `public/models/onebin.onnx` (fp16 weights, fp32 input and output; it outputs softmax probabilities) and `public/models/onebin.json`. The JSON holds the class list, input size, normalization and the bin rules copied from `bins.py`. The web app never hardcodes classes or bins: **after changing `bins.py` or retraining, rerun `export_onnx.py`** and commit both files.
+- [lib/classifier.ts](../lib/classifier.ts) loads the model once, then preprocesses each image the same way as `eval_tf` (center square, resized to `size`, normalized), runs it, and sums class probabilities into bins.
+- UI: [components/Sorter.tsx](../components/Sorter.tsx) (state, upload and drag-drop), [CameraCapture.tsx](../components/CameraCapture.tsx), and [VerdictCard.tsx](../components/VerdictCard.tsx).
+- [next.config.mjs](../next.config.mjs) sends COOP/COEP headers so onnxruntime-web can use threads. Anything loaded from another origin (scripts, images, iframes) must send CORP/CORS headers, or the browser will block it.
+- The model is a normal git file (about 42 MB), not LFS, because CI and Vercel deploy from a plain checkout.
 
 ## Conventions and gotchas
 

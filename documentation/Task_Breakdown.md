@@ -31,6 +31,8 @@
 
 ---
 
+> **Phase 1 Architecture (Dual-Engine Hybrid)**: The web app combines fast on-device classification via our fine-tuned ONNX model running in-browser (<50ms) with deep zero-shot multimodal reasoning, contamination warnings, and Seattle municipal rules powered by Google Gemini 2.5 Flash via `/api/classify`.
+
 ## Atomic Task List
 
 ### Task 1.1: Project Scaffolding & Vercel Configuration
@@ -55,7 +57,7 @@
 ---
 
 ### Task 1.2: Serverless Gemini Vision API Route with Structured JSON Output
-- **Status**: `[PENDING - GREENLIT FOR BUILDER]`
+- **Status**: `[ACTIVE - BEING IMPLEMENTED BY BUILDER]`
 - **Target Files**:
   - `app/api/classify/route.ts`
   - `lib/gemini.ts` (API client & schema definition)
@@ -95,27 +97,27 @@
 ---
 
 ### Task 1.3: Responsive Camera & Upload UI Component
-- **Status**: `[IMPLEMENTED ON BRANCH: feat/in-browser-classifier]`
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/CameraCapture.tsx`, upload + drag-drop in `components/Sorter.tsx`. Images are center-cropped to 320×320 in-browser; local instant inference.
 - **Target Files**:
   - `components/CameraCapture.tsx`
   - `components/Sorter.tsx`
 - **Objective**: Build an intuitive image capture and file upload interface optimized for both mobile devices and desktops.
-- **Current State**: Implemented on branch `feat/in-browser-classifier` by Claude Agent; pending merge into `main`.
+- **Current State**: Implemented and verified; merging into `main`.
 
 ---
 
 ### Task 1.4: Classification Results Card & Visual Feedback Component
-- **Status**: `[IMPLEMENTED ON BRANCH: feat/in-browser-classifier]`
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/VerdictCard.tsx` (bin, item, confidence, bin bars, battery warning, <60% "when in doubt, trash"). Being connected with Gemini API route for deep reasoning.
 - **Target Files**:
   - `components/VerdictCard.tsx`
   - `components/Sorter.tsx`
 - **Objective**: Design and build the primary presentation view displaying the waste sorting verdict, confidence score, rationale, and safety warnings.
-- **Current State**: Implemented on branch `feat/in-browser-classifier` by Claude Agent; pending merge into `main` and connection with Task 1.2 for Gemini AI deep explanations.
+- **Current State**: Implemented; connecting to `/api/classify` for AI deep explanations.
 
 ---
 
 ### Task 1.5: End-to-End Integration, PR Merge & Live Deployment Verification
-- **Status**: `[PENDING]`
+- **Status**: `[ACTIVE]`
 - **Target Files**:
   - `README.md`
   - `documentation/CollabWorkflow.md`
