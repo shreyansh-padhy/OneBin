@@ -1,6 +1,7 @@
 # OneBin 🗑️♻️🌱
 
-> **Instant, zero-latency waste sorting powered by in-browser ONNX WebAssembly, paired with deep multimodal reasoning via Google Gemini 2.5 Flash.**
+> **Instant, zero-latency waste sorting powered entirely on-device by in-browser ONNX WebAssembly.**
+> Zero API keys, zero cloud latency, zero compute costs, 100% private.
 
 Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)
 
@@ -12,7 +13,7 @@ Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)
 
 ### Key Capabilities
 - **⚡ Instant On-Device Inference (< 50ms)**: Runs entirely client-side using `onnxruntime-web` with WebAssembly (WASM), Web Workers, and SIMD acceleration. Works completely offline with zero latency and full user privacy.
-- **✨ Deep Multimodal Reasoning (Gemini 2.5 Flash)**: On-demand serverless cloud analysis using Google's `@google/genai` SDK with strict JSON schema enforcement (`responseSchema`), explaining material composition and regulatory rationale.
+- **🔑 Zero API Keys Required**: No external cloud AI API keys (Google Gemini, OpenAI, Anthropic, etc.) required. All neural network weights execute within the client browser sandbox.
 - **🛡️ Seattle Municipal Waste Compliance**:
   - **Plastic Bags & Films**: Strictly routed to **Trash** (they tangle mechanical sorting facility star screens).
   - **Styrofoam / Expanded Polystyrene**: Strictly routed to **Trash** (not curbside recyclable).
@@ -21,25 +22,25 @@ Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)
 
 ---
 
-## Hybrid Architecture
+## Edge Architecture
 
-OneBin pairs edge machine learning with cloud multimodal intelligence:
+OneBin executes 100% client-side in the browser:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                       Client Browser                        │
-├──────────────────────────────┬──────────────────────────────┤
-│    Local Edge Inference      │   On-Demand Cloud Vision     │
-│   (onnxruntime-web / WASM)   │      (Gemini 2.5 Flash)      │
-│                              │                              │
-│   • Model: onebin.onnx       │   • POST /api/classify       │
-│   • Speed: ~20-50ms          │   • Structured JSON Schema   │
-│   • Offline: Yes             │   • Material decomposition   │
-│   • Privacy: 100% on-device  │   • Contamination warnings   │
-└──────────────┬───────────────┴──────────────┬───────────────┘
-               │                              │
-               ▼                              ▼
-      [ Instant Verdict ]             [ Deep AI Rationale ]
+├─────────────────────────────────────────────────────────────┤
+│    Local Edge Inference (onnxruntime-web / WASM)            │
+│                                                             │
+│   • Model: public/models/onebin.onnx (FP16, 41.7MB)         │
+│   • Speed: ~20-50ms                                         │
+│   • Offline: Yes                                            │
+│   • Privacy: 100% on-device (camera frames never leave device)
+│   • Zero Cloud Compute Costs                                │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+                      [ Instant Verdict ]
 ```
 
 ### 12-Class Seattle Taxonomy (`bins.py`)
@@ -65,7 +66,6 @@ OneBin pairs edge machine learning with cloud multimodal intelligence:
 - **Framework**: Next.js 15 (App Router), React 19, TypeScript
 - **Styling**: Tailwind CSS, Lucide React
 - **Edge ML**: `onnxruntime-web` (WASM + multi-threading via COOP/COEP headers)
-- **Cloud Vision**: Google Gen AI SDK (`@google/genai`), Gemini 2.5 Flash (`gemini-2.5-flash`)
 - **Deployment**: Vercel Serverless Edge, GitHub Actions automated CI/CD pipeline
 - **Model Training & Export**: PyTorch, torchvision, ONNX (`export_onnx.py`)
 
@@ -74,7 +74,7 @@ OneBin pairs edge machine learning with cloud multimodal intelligence:
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ (tested with Node 20 / 22)
+- Node.js 18+ (tested with Node 20 / 22 / 24)
 - npm or pnpm
 
 ### Installation
@@ -91,18 +91,7 @@ OneBin pairs edge machine learning with cloud multimodal intelligence:
    ```
    *(The `predev` and `prebuild` lifecycle scripts automatically copy ONNX runtime WASM assets to `public/ort/`)*
 
-3. Configure Environment Variables:
-   Copy `.env.example` to `.env.local`:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Provide your Gemini API key from [Google AI Studio](https://aistudio.google.com/):
-   ```env
-   GEMINI_API_KEY=your_gemini_api_key_here
-   GEMINI_MODEL=gemini-2.5-flash
-   ```
-
-4. Start the development server:
+3. Start the development server (No API keys or `.env` needed!):
    ```bash
    npm run dev
    ```
@@ -113,16 +102,17 @@ OneBin pairs edge machine learning with cloud multimodal intelligence:
 ## Scripts & Commands
 
 - `npm run dev`: Launch Next.js local development server (with ONNX WASM pre-copy).
-- `npm run build`: Production build with static optimization and dynamic API route compilation.
+- `npm run build`: Production build with static optimization.
 - `npm run lint`: Run ESLint checks.
 - `npm run start`: Start production server.
 - `python export_onnx.py`: Export PyTorch model (`checkpoints/best.pt`) to ONNX (`public/models/onebin.onnx`) and generate metadata (`public/models/onebin.json`).
 
 ---
 
-## Deployment
+## Deployment & Hosting
 
 OneBin is continuously deployed to **Vercel** via GitHub Actions:
+- **No Docker containers required**: The ONNX model is served as an optimized static asset via Vercel's global CDN and executes inside the client's browser.
 - Every push to `main` executes linting, type validation, and production build checks.
 - On successful validation, GitHub Actions deploys the build directly to Vercel production:
   - **Live URL**: [https://onebin.vercel.app](https://onebin.vercel.app)

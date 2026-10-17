@@ -1,7 +1,7 @@
 # OneBin: Business & Resources
 
 ## 1. Project Overview & Pitch
-**OneBin** is an AI-powered waste classification and automated sorting system engineered for hackathon presentation and real-world deployment. By combining computer vision with the Google Gemini API, OneBin categorizes household and commercial waste items into three distinct streams:
+**OneBin** is an AI-powered waste classification and automated sorting system engineered for hackathon presentation and real-world deployment. By combining computer vision with on-device WebAssembly machine learning, OneBin categorizes household and commercial waste items into three distinct municipal streams:
 - **Compost**
 - **Recycling**
 - **Trash**
@@ -22,37 +22,54 @@ The project is built by a two-person human engineering team:
 
 | Component | Technology | Purpose |
 |---|---|---|
-| **Repository** | [GitHub](https://github.com/shreyansh-padhy/OneBin) | Source code management, version control, collaboration, and CI/CD triggers. |
-| **Vision & Reasoning** | [Google Gemini API](https://ai.google.dev/) | Multimodal image understanding, zero-shot item categorization, contamination warnings, and sorting rationale. |
-| **Frontend & Presentation** | [Vercel](https://vercel.com/) | Cloud hosting, frontend presentation layer, fast global CDN, and serverless API proxying. |
-| **Baseline Machine Learning** | PyTorch / EfficientNetV2-S / Gradio | Local ML baseline and evaluation pipeline (`train.py`, `bins.py`, `app.py`) classifying across 10 fine-grained categories mapped to the 3 bins. |
-
-### 3.1 Google AI & Student Resource Entitlements
-
-The team is equipped with premier developer and student resource tiers that provide high-throughput AI infrastructure with zero infrastructure costs:
-
-| Resource Tier | Access Level & Features | Hackathon & Deployment Benefit |
-|---|---|---|
-| **Google AI Pro Plan** | • Premium access to Google's flagship reasoning models (Gemini 2.5 Pro, Gemini 2.5 Flash)<br>• Extended multimodal context windows (audio, video, high-res images)<br>• Prioritized latency and enhanced API throughput | Unlocks high-fidelity image classification with complex reasoning, edge-case disambiguation (e.g., distinguishing soiled vs. clean cardboard), and rapid inference under judging conditions. |
-| **Google AI Studio (Student / Free Tier)** | • Free developer console for model configuration & system instruction tuning<br>• Native Structured Outputs (`responseSchema` with strict JSON validation)<br>• Zero-cost API key provisioning and prompt caching capabilities | Enables direct testing and prompt iteration before deployment; guarantees schema compliance without third-party validation overhead. |
-| **GitHub Student Developer Pack** | • Unlimited private repositories and GitHub Actions CI/CD automation<br>• Branch protection rules, pull request status checks, and automated audit trails | Enforces strict code quality and multi-agent coordination without running out of CI minutes. |
-| **Vercel Cloud (Student / Developer Tier)** | • Unlimited preview deployments for pull requests<br>• Zero-config Next.js serverless functions with edge routing<br>• Custom domains and SSL (`https://onebin.vercel.app`) | Provides instantaneous global demo delivery with zero cold-start concerns for judges. |
+| **Repository & Automation** | [GitHub](https://github.com/shreyansh-padhy/OneBin) | Source code management, version control, multi-agent PR workflows, and automated CI/CD checks. |
+| **Inference Engine** | In-Browser ONNX Runtime (`onnxruntime-web` / WASM) | 100% client-side inference using `onebin.onnx` (FP16, 41.7MB) with WebAssembly threads and SIMD. **Zero external API keys required.** |
+| **Frontend & CDN** | [Vercel](https://vercel.com/) | Cloud hosting, frontend presentation layer, fast global Edge CDN for static model weight delivery, and COOP/COEP headers. |
+| **Baseline Machine Learning** | PyTorch / EfficientNetV2-S / Gradio / ONNX | Offline training, evaluation, and export pipeline (`train.py`, `bins.py`, `export_onnx.py`) classifying across 12 Seattle fine-grained categories mapped to the 3 bins. |
+| **Realtime Telemetry (Optional)** | [Supabase](https://supabase.com/) | Managed PostgreSQL + Realtime WebSockets for live hackathon presentation dashboards and scan event telemetry. |
 
 ---
 
-## 4. Backend Database Scope Evaluation (Supabase) [Placeholder]
+## 4. Resource Suite & Available Capabilities
 
-*Status: Under Scope Evaluation*
+### 4.1 GitHub (Student Developer Pack)
+- **Unlimited Private Repositories & Actions**: Automated CI/CD runs on every push and pull request via [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), verifying linting and Next.js builds.
+- **Branch Protection & Automated PR Audits**: Enforces code stability before merging features to `main`.
+- **Zero API Dependency**: GitHub Actions requires no external third-party API tokens to verify builds.
 
-### Potential Use Cases for Supabase:
-- **Disposal History & Telemetry**: Logging classification events, user scans, timestamps, and predicted waste categories.
-- **Analytics & Metrics**: Aggregating diversion rates (% recycled vs. composted vs. trashed) to demonstrate impact during judging.
-- **Dynamic Bin Configurations**: Storing municipality-specific sorting rules (e.g., whether specific plastics are recyclable locally) without requiring code redeployments.
-- **User Authentication / Admin Dashboard**: Allowing facility managers or event organizers to monitor bin usage.
+### 4.2 Vercel Cloud Platform
+- **Live Production Deployment**: Active and live at [https://onebin.vercel.app](https://onebin.vercel.app).
+- **Global Edge CDN**: Delivers the Next.js bundle and the static `onebin.onnx` model (41.7MB) with aggressive HTTP caching (`Cache-Control: public, max-age=31536000, immutable`), ensuring sub-second initial load and instant cached reloads.
+- **Cross-Origin Isolation**: Configured in `next.config.mjs` with `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` to enable multi-threaded WebAssembly execution.
+- **Vercel Blob Storage (1GB Free Tier)**: Can store anonymized user scan images for model retraining or auditing without provisioning S3 buckets.
+- **Vercel Edge Config**: Sub-15ms globally replicated key-value store, useful for updating municipal sorting rules or threshold settings dynamically without redeploying code.
 
-### Evaluation Criteria:
-1. Does the hackathon MVP require persistent scan history and user profiles?
-2. Can metrics be presented effectively client-side or via mock data if network latency is a risk during live demoing?
-3. What is the implementation overhead vs. core Gemini vision features within the hackathon timeframe?
+### 4.3 Supabase (PostgreSQL + Realtime)
+- **Live Presentation Dashboard**: Stream real-time scan events (`scan_id`, `bin_verdict`, `confidence`, `timestamp`) over Supabase Realtime WebSockets to a live scoreboard or projector during judging.
+- **Diversion Analytics**: Compute cumulative landfill diversion rates and contamination prevention stats dynamically in SQL.
+- **REST & GraphQL Instant APIs**: Queryable via auto-generated TypeScript clients without manual backend scaffolding.
 
-*Decision checkpoint will be scheduled prior to Phase 2 implementation.*
+---
+
+## 5. Model Execution & Hosting Strategy: Docker vs. Vercel vs. In-Browser
+
+### ❓ Do we need Docker for containing the model?
+**Answer: NO. Docker is completely unnecessary.**
+
+### Architectural Breakdown:
+1. **Why Traditional Cloud Models Need Docker**:
+   - Serving PyTorch in Python requires heavy C++ libraries, CUDA drivers, and Python runtime dependencies, resulting in a 1.5 GB – 4.0 GB container.
+   - Traditional setups package this inside a Docker image deployed to AWS ECS, GCP Cloud Run, or RunPod.
+   - Vercel Serverless Functions have an uncompressed bundle size limit of **50 MB** (max 250 MB on pro plans) and short execution timeouts (10s–60s), meaning raw PyTorch cannot be hosted inside standard Vercel serverless functions.
+
+2. **How OneBin Solved This Without Docker**:
+   - The team authored [`export_onnx.py`](../export_onnx.py) which quantizes and converts the trained PyTorch checkpoint (`checkpoints/best.pt`) into an **ONNX FP16 graph (`public/models/onebin.onnx`, 41.7 MB)**.
+   - Vercel serves `onebin.onnx` as a standard static asset via its global Edge CDN.
+   - The user's web browser downloads the model once and loads it directly into client-side RAM using **`onnxruntime-web`**.
+   - Inference runs **100% inside the browser** using WebAssembly (WASM) with CPU SIMD or WebGL GPU acceleration.
+
+3. **Advantages of the Zero-Docker, Zero-API-Key Architecture**:
+   - **Zero Cloud Compute Costs**: $0 hosting bill. Vercel only serves static bytes; compute happens on the user's client hardware.
+   - **Ultra-Low Latency**: Frame classification executes in **~20ms – 50ms**, eliminating network round-trips.
+   - **100% Privacy & Offline Capability**: Camera frames never leave the user's device.
+   - **Zero Cold Starts**: No waiting for Docker containers to spin up from sleep.

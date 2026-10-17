@@ -33,9 +33,6 @@ jobs:
 
       - name: Run build
         run: npm run build
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'ci_mock_gemini_key' }}
-          GEMINI_MODEL: gemini-2.5-flash
 
       - name: Deploy to Vercel Production
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
