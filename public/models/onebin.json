@@ -1,0 +1,56 @@
+{
+  "source": "best.pt",
+  "classes": [
+    "battery",
+    "biological",
+    "cardboard",
+    "clothes",
+    "glass",
+    "metal",
+    "paper",
+    "plastic",
+    "plastic_bag",
+    "shoes",
+    "styrofoam",
+    "trash"
+  ],
+  "size": 320,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "bins": [
+    "compost",
+    "recycling",
+    "trash"
+  ],
+  "binOf": {
+    "battery": "trash",
+    "biological": "compost",
+    "cardboard": "recycling",
+    "clothes": "trash",
+    "glass": "recycling",
+    "metal": "recycling",
+    "paper": "recycling",
+    "plastic": "recycling",
+    "plastic_bag": "trash",
+    "shoes": "trash",
+    "styrofoam": "trash",
+    "trash": "trash"
+  },
+  "binDisplay": {
+    "compost": "🟢 COMPOST",
+    "recycling": "🔵 RECYCLING",
+    "trash": "⚫ TRASH"
+  },
+  "warn": {
+    "battery": "🔋 Batteries are hazardous — take to a battery drop-off if you can."
+  },
+  "lowConfidence": 0.6
+}

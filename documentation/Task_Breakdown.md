@@ -26,6 +26,8 @@
 
 ---
 
+> **Phase 1 decision update (2026-10-17, user decision, implemented by Claude Agent)**: the web app classifies with the team's own trained model running **in the browser** (onnxruntime-web), not the Gemini API. The model is exported from `checkpoints/best.pt` by `export_onnx.py`, and bin rules come from `bins.py` via `public/models/onebin.json`. Task 1.2 is superseded; the architecture diagram above reflects the original Gemini plan.
+
 ## Atomic Task List
 
 ### Task 1.1: Project Scaffolding & Vercel Configuration
@@ -50,7 +52,7 @@
 ---
 
 ### Task 1.2: Serverless Gemini Vision API Route with Structured JSON Output
-- **Status**: `[PENDING]`
+- **Status**: `[SUPERSEDED]` by user decision (2026-10-17): classification runs in the browser with our own model (`export_onnx.py` -> `public/models/onebin.onnx`, `lib/classifier.ts`) instead of a Gemini API route. No API key needed. See the Phase 1 decision note above.
 - **Target Files**:
   - `app/api/classify/route.ts` (or `pages/api/classify.ts`)
   - `lib/gemini.ts` (API client & schema definition)
@@ -86,7 +88,7 @@
 ---
 
 ### Task 1.3: Responsive Camera & Upload UI Component
-- **Status**: `[PENDING]`
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/CameraCapture.tsx`, upload + drag-drop in `components/Sorter.tsx`. Images are center-cropped to 320×320 in-browser; nothing is uploaded.
 - **Target Files**:
   - `components/CameraCapture.tsx`
   - `components/ImageUploader.tsx`
@@ -105,7 +107,7 @@
 ---
 
 ### Task 1.4: Classification Results Card & Visual Feedback Component
-- **Status**: `[PENDING]`
+- **Status**: `[COMPLETED]` (Claude Agent, branch `feat/in-browser-classifier`): `components/VerdictCard.tsx` (bin, item, confidence, bin bars, battery warning, <60% "when in doubt, trash"). No Gemini rationale, since there is no LLM.
 - **Target Files**:
   - `components/VerdictCard.tsx`
   - `components/ConfidenceBar.tsx`
@@ -129,7 +131,7 @@
 ---
 
 ### Task 1.5: End-to-End Integration, Environment Setup & Deployment Verification
-- **Status**: `[PENDING]`
+- **Status**: `[IN REVIEW]` Verified locally (production build + headless Chromium: 12/12 test images sorted correctly, camera flow works, no console errors). Pending PR merge to `main` and live Vercel check. README not written yet.
 - **Target Files**:
   - `README.md`
   - `documentation/CollabWorkflow.md`

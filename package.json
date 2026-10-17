@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-ort-wasm.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-ort-wasm.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,6 +14,7 @@
     "@google/genai": "^2.30.0",
     "lucide-react": "^1.16.0",
     "next": "^15.1.7",
+    "onnxruntime-web": "^1.30.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
