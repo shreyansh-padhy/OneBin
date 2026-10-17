@@ -28,7 +28,7 @@
 | Agent | Status | Current Activity / Focus | Last Updated |
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Assessed multi-branch progress & updated Task_Breakdown.md with Hybrid Edge + Gemini architecture; ready for Builder Task 1.2 | 2026-10-17 |
-| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Standing by on Vercel deployment while teammate configures project setup; greenlit for Task 1.2 code | 2026-10-17 |
+| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Completed Tasks 1.2 & 1.5: Gemini Vision route, hybrid UI integration, README, ready for PR and live verification | 2026-10-17 |
 | **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (dataset expansion, Seattle 12-class taxonomy) | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | In-browser classifier built on branch `feat/in-browser-classifier`; merging into main | 2026-10-17 |
 
@@ -39,16 +39,16 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Claude Agent | Built in-browser classifier web app: ONNX export of best.pt (fp16, 41.7 MB), camera/upload UI, verdict card, COOP/COEP for WASM threads. Completed Tasks 1.3 & 1.4 | `export_onnx.py`, `lib/`, `components/`, `app/`, `public/models/`, `scripts/`, `next.config.mjs` | Verified locally; Merged to main |
-| 02 | 2026-10-17 | Idea Agent (`37c49000`) | Updated Task_Breakdown.md: formalized Hybrid Edge (ONNX) + Cloud (Gemini 2.5) architecture and updated Tasks 1.2-1.5 | `documentation/Task_Breakdown.md` | PR #6 Merged |
-| 03 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (4-dataset aggregator, Seattle 12-class taxonomy); updated Task 1.2 with Seattle rules | `bins.py`, `import_data.py`, `train.py`, `documentation/Task_Breakdown.md` | Verified & Approved |
-| 04 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
-| 05 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
-| 06 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
-| 07 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
-| 08 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
-| 09 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
-| 10 | 2026-10-17 | Auditor (`cf506aec`) | Audited Phase 1 task breakdown: Approved architecture with CI & model pinning addenda | `documentation/Task_Breakdown.md` | Approved with Notes — Builder Greenlit |
+| 01 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.2 & 1.5: created lib/types.ts, lib/gemini.ts (@google/genai structured JSON), app/api/classify/route.ts, hybrid Gemini explanation in VerdictCard.tsx, Sorter.tsx, and README.md | `lib/types.ts`, `lib/gemini.ts`, `app/api/classify/route.ts`, `components/`, `README.md` | Verified (lint & build passed) |
+| 02 | 2026-10-17 | Claude Agent | Built in-browser classifier web app: ONNX export of best.pt (fp16, 41.7 MB), camera/upload UI, verdict card, COOP/COEP for WASM threads. Completed Tasks 1.3 & 1.4 | `export_onnx.py`, `lib/`, `components/`, `app/`, `public/models/`, `scripts/`, `next.config.mjs` | Verified locally; Merged to main |
+| 03 | 2026-10-17 | Idea Agent (`37c49000`) | Updated Task_Breakdown.md: formalized Hybrid Edge (ONNX) + Cloud (Gemini 2.5) architecture and updated Tasks 1.2-1.5 | `documentation/Task_Breakdown.md` | PR #6 Merged |
+| 04 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (4-dataset aggregator, Seattle 12-class taxonomy); updated Task 1.2 with Seattle rules | `bins.py`, `import_data.py`, `train.py`, `documentation/Task_Breakdown.md` | Verified & Approved |
+| 05 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
+| 06 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
+| 07 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
+| 08 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured Vercel project "onebin" (ID: prj_Lk1LvMVpfZZq6MP3UFLfPsoVI5Lf) connected to shreyansh-padhy/OneBin; deployed production build live to https://onebin.vercel.app | Vercel Cloud Platform | Live & Operational |
+| 09 | 2026-10-17 | Auditor (`cf506aec`) | Created root AGENTS.md & CLAUDE.md; added Claude Agent role, state tracking, and LRU protocol | `AGENTS.md`, `CLAUDE.md`, `documentation/CollabWorkflow.md` | Complete & Verified |
+| 10 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.1: Next.js 15, Tailwind, Vercel config, GitHub Actions CI. Pinned @google/genai ^2.30.0 & configured .eslintrc.json. PR #1 passed CI checks and merged to main. | Root, `.github/workflows/ci.yml`, `app/` | Verified & Merged (PR #1) |
 
 ---
 
