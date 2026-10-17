@@ -28,7 +28,7 @@
 | Agent | Status | Current Activity / Focus | Last Updated |
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Assessed multi-branch progress & updated Task_Breakdown.md with Hybrid Edge + Gemini architecture; ready for Builder Task 1.2 | 2026-10-17 |
-| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Completed Tasks 1.2 & 1.5: Gemini Vision route, hybrid UI integration, README, ready for PR and live verification | 2026-10-17 |
+| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Executed P1-P5: merged checkpoint branch, built Auto-Scan mode, Web Speech readout, Supabase telemetry & stats modal, and Web Serial IoT actuation | 2026-10-17 |
 | **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #4.1: finalized active vs available resource accounting under Free Tiers (GitHub, Vercel Hobby, Supabase Free) | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | In-browser classifier built on branch `feat/in-browser-classifier`; merging into main | 2026-10-17 |
 
@@ -39,16 +39,16 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Builder (`6b28e153`) | Merged origin/model/combined-12class into main: integrated checkpoints/best.pt via Git LFS, evaluate.py, and .gitattributes | `checkpoints/best.pt`, `evaluate.py`, `.gitattributes`, `.gitignore` | Merged & Verified |
-| 02 | 2026-10-17 | Auditor (`cf506aec`) | Updated Business_and_Resources.md: explicitly categorized Active in-use resources (GitHub Actions, Vercel Hobby CDN/WASM) vs Available free-tier capabilities (Supabase Free, Vercel Blob/Edge Config) | `documentation/Business_and_Resources.md` | Verified & Documented |
-| 03 | 2026-10-17 | Auditor (`cf506aec`) | Executed zero-API-key transition per user directive: updated Business_and_Resources.md, Task_Breakdown.md, README.md, .env.example, .github/workflows/ci.yml, and VerdictCard.tsx; verified production build (4.8s) | Documentation, CI, VerdictCard, .env.example | Verified (Build Passed in 4.8s) |
-| 04 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.2 & 1.5: created lib/types.ts, lib/gemini.ts (@google/genai structured JSON), app/api/classify/route.ts, hybrid Gemini explanation in VerdictCard.tsx, Sorter.tsx, and README.md | `lib/types.ts`, `lib/gemini.ts`, `app/api/classify/route.ts`, `components/`, `README.md` | Verified (lint & build passed) |
-| 05 | 2026-10-17 | Claude Agent | Built in-browser classifier web app: ONNX export of best.pt (fp16, 41.7 MB), camera/upload UI, verdict card, COOP/COEP for WASM threads. Completed Tasks 1.3 & 1.4 | `export_onnx.py`, `lib/`, `components/`, `app/`, `public/models/`, `scripts/`, `next.config.mjs` | Verified locally; Merged to main |
-| 06 | 2026-10-17 | Idea Agent (`37c49000`) | Updated Task_Breakdown.md: formalized Hybrid Edge (ONNX) + Cloud (Gemini 2.5) architecture and updated Tasks 1.2-1.5 | `documentation/Task_Breakdown.md` | PR #6 Merged |
-| 07 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (4-dataset aggregator, Seattle 12-class taxonomy); updated Task 1.2 with Seattle rules | `bins.py`, `import_data.py`, `train.py`, `documentation/Task_Breakdown.md` | Verified & Approved |
-| 08 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
-| 09 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
-| 10 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Updated Business_and_Resources.md: added Section 3.1 detailing Google AI Pro plan, Google AI Studio, and student resource entitlements | `documentation/Business_and_Resources.md` | Verified & Documented |
+| 01 | 2026-10-17 | Builder (`6b28e153`) | Implemented P2-P5 backlog: continuous Auto-Scan mode (CameraCapture.tsx), Web Speech voice readout (VerdictCard.tsx), Impact telemetry & StatsModal (lib/supabase.ts, StatsModal.tsx), and Web Serial IoT servo actuation (lib/serial.ts) | `components/`, `lib/` | Verified (build & lint passed) |
+| 02 | 2026-10-17 | Builder (`6b28e153`) | Merged origin/model/combined-12class into main: integrated checkpoints/best.pt via Git LFS, evaluate.py, and .gitattributes | `checkpoints/best.pt`, `evaluate.py`, `.gitattributes`, `.gitignore` | Merged & Verified |
+| 03 | 2026-10-17 | Auditor (`cf506aec`) | Updated Business_and_Resources.md: explicitly categorized Active in-use resources (GitHub Actions, Vercel Hobby CDN/WASM) vs Available free-tier capabilities (Supabase Free, Vercel Blob/Edge Config) | `documentation/Business_and_Resources.md` | Verified & Documented |
+| 04 | 2026-10-17 | Auditor (`cf506aec`) | Executed zero-API-key transition per user directive: updated Business_and_Resources.md, Task_Breakdown.md, README.md, .env.example, .github/workflows/ci.yml, and VerdictCard.tsx; verified production build (4.8s) | Documentation, CI, VerdictCard, .env.example | Verified (Build Passed in 4.8s) |
+| 05 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 1.2 & 1.5: created lib/types.ts, lib/gemini.ts (@google/genai structured JSON), app/api/classify/route.ts, hybrid Gemini explanation in VerdictCard.tsx, Sorter.tsx, and README.md | `lib/types.ts`, `lib/gemini.ts`, `app/api/classify/route.ts`, `components/`, `README.md` | Verified (lint & build passed) |
+| 06 | 2026-10-17 | Claude Agent | Built in-browser classifier web app: ONNX export of best.pt (fp16, 41.7 MB), camera/upload UI, verdict card, COOP/COEP for WASM threads. Completed Tasks 1.3 & 1.4 | `export_onnx.py`, `lib/`, `components/`, `app/`, `public/models/`, `scripts/`, `next.config.mjs` | Verified locally; Merged to main |
+| 07 | 2026-10-17 | Idea Agent (`37c49000`) | Updated Task_Breakdown.md: formalized Hybrid Edge (ONNX) + Cloud (Gemini 2.5) architecture and updated Tasks 1.2-1.5 | `documentation/Task_Breakdown.md` | PR #6 Merged |
+| 08 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #3: audited Claude/shpadhy commit f35e0b7 (4-dataset aggregator, Seattle 12-class taxonomy); updated Task 1.2 with Seattle rules | `bins.py`, `import_data.py`, `train.py`, `documentation/Task_Breakdown.md` | Verified & Approved |
+| 09 | 2026-10-17 | Builder (`6b28e153-9c67-43e2-9145-db22583f6d71`) | Configured automated Vercel production deployment in CI workflow (.github/workflows/ci.yml) and set VERCEL secrets via gh secret | `.github/workflows/ci.yml`, GitHub Secrets | Verified & Automated |
+| 10 | 2026-10-17 | Auditor (`cf506aec`) | Completed Audit Report #2: verified Task 1.1 codebase, live Vercel site (https://onebin.vercel.app), CI runs, and evaluated Google AI Pro plan benefits | Full Project | Approved & Greenlit for Task 1.2 |
 
 ---
 
