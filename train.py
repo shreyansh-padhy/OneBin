@@ -1,9 +1,10 @@
-"""Fine-tune EfficientNetV2-S on the Garbage Dataset (arXiv:2602.10500) and sort into
-compost / recycling / trash.
+"""Fine-tune EfficientNetV2-S and sort into compost / recycling / trash.
 
-The model learns the dataset's 10 fine classes; at eval/inference their probabilities
-are summed into the 3 bins defined in bins.py.
+Trains on data/combined (built by import_data.py: the Garbage Dataset from
+arXiv:2602.10500 plus extra public datasets). The model learns the fine classes;
+at eval/inference their probabilities are summed into the 3 bins in bins.py.
 
+    python import_data.py
     python train.py
 
 Later, fine-tune with your own photos (folders named after the 10 classes,
@@ -22,7 +23,7 @@ from torchvision import datasets, models, transforms
 
 from bins import BIN_OF, BINS
 
-DEFAULT_DATA = Path.home() / ".cache/kagglehub/datasets/sumn2u/garbage-classification-v2/versions/12/standardized_384"
+DEFAULT_DATA = Path(__file__).parent / "data/combined"
 MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
 
 
@@ -60,14 +61,20 @@ def bin_matrix(classes):
     return M
 
 
-def split_indices(targets, seed=0, val=0.1, test=0.1):
-    """Stratified train/val/test split, fixed seed so the test set never changes."""
+def source_of(path):
+    """import_data.py names files <source>__<name>; anything else is 'own'."""
+    name = Path(path).name
+    return name.split("__")[0] if "__" in name else "own"
+
+
+def split_indices(keys, seed=0, val=0.1, test=0.1):
+    """Train/val/test split stratified by key (here: (source, class)), fixed seed."""
     rng = random.Random(seed)
-    by_class = {}
-    for i, t in enumerate(targets):
-        by_class.setdefault(t, []).append(i)
+    by_key = {}
+    for i, k in enumerate(keys):
+        by_key.setdefault(k, []).append(i)
     tr, va, te = [], [], []
-    for idxs in by_class.values():
+    for idxs in by_key.values():
         rng.shuffle(idxs)
         n_te, n_va = int(len(idxs) * test), int(len(idxs) * val)
         te += idxs[:n_te]
@@ -77,13 +84,15 @@ def split_indices(targets, seed=0, val=0.1, test=0.1):
 
 
 @torch.no_grad()
-def evaluate(model, loader, classes, device):
-    """Returns 10-class acc, 3-bin acc, and a 3x3 bin confusion matrix (rows = true)."""
+def evaluate(model, loader, classes, device, sources=None):
+    """Returns fine-class acc, 3-bin acc, a 3x3 bin confusion matrix (rows = true),
+    and, if `sources` (one per sample, in loader order) is given, 3-bin acc per source."""
     model.eval()
     M = bin_matrix(classes).to(device)
     fine_to_bin = M.argmax(1)
     conf = torch.zeros(len(BINS), len(BINS), dtype=torch.long)
     fine_ok = n = 0
+    src_ok, src_n = Counter(), Counter()
     for x, y in loader:
         x, y = x.to(device), y.to(device)
         with torch.autocast(device.type, enabled=device.type == "cuda"):
@@ -93,8 +102,12 @@ def evaluate(model, loader, classes, device):
         true_bin = fine_to_bin[y]
         for t, p in zip(true_bin.tolist(), pred_bin.tolist()):
             conf[t, p] += 1
-        n += len(y)
-    return fine_ok / n, conf.diag().sum().item() / n, conf
+            if sources:
+                src_n[sources[n]] += 1
+                src_ok[sources[n]] += t == p
+            n += 1
+    per_source = {s: src_ok[s] / src_n[s] for s in sorted(src_n)}
+    return fine_ok / n, conf.diag().sum().item() / n, conf, per_source
 
 
 def print_confusion(conf):
@@ -110,6 +123,7 @@ def main():
     ap.add_argument("--extra", type=Path, help="folder of your own photos, same class subfolders")
     ap.add_argument("--init", type=Path, help="checkpoint to start from")
     ap.add_argument("--epochs", type=int, default=10)
+    ap.add_argument("--epoch-size", type=int, default=12000, help="images sampled per epoch")
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--size", type=int, default=320)
@@ -121,10 +135,13 @@ def main():
     print("device:", device)
     train_tf, eval_tf = make_transforms(args.size)
 
+    if not args.data.exists():
+        raise SystemExit(f"{args.data} not found -- run: python import_data.py")
     base_train = datasets.ImageFolder(args.data, transform=train_tf)
     base_eval = datasets.ImageFolder(args.data, transform=eval_tf)
     classes = base_train.classes
-    tr, va, te = split_indices(base_train.targets)
+    sources = [source_of(p) for p, _ in base_train.samples]
+    tr, va, te = split_indices(list(zip(sources, base_train.targets)))
     print(f"train {len(tr)}  val {len(va)}  test {len(te)}  classes {classes}")
 
     train_sets = [Subset(base_train, tr)]
@@ -132,6 +149,9 @@ def main():
     if args.extra:
         extra = datasets.ImageFolder(args.extra, transform=train_tf)
         # remap extra's class indices onto the base dataset's
+        unknown = set(extra.classes) - set(classes)
+        if unknown:
+            raise SystemExit(f"{args.extra} has folders {unknown} not in {classes}")
         remap = {i: classes.index(c) for i, c in enumerate(extra.classes)}
         extra.target_transform = remap.get
         train_sets.append(extra)
@@ -142,7 +162,7 @@ def main():
     # Balance classes so the model doesn't ignore small ones (biological = all of compost, trash)
     counts = Counter(train_targets)
     weights = [1.0 / counts[t] for t in train_targets]
-    sampler = WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+    sampler = WeightedRandomSampler(weights, num_samples=args.epoch_size, replacement=True)
 
     dl = dict(batch_size=args.batch, num_workers=args.workers, pin_memory=True, persistent_workers=True)
     train_dl = DataLoader(train_ds, sampler=sampler, drop_last=True, **dl)
@@ -174,16 +194,17 @@ def main():
             scaler.update()
             sched.step()
             total += loss.item()
-        fine, bin_acc, _ = evaluate(model, val_dl, classes, device)
-        print(f"epoch {epoch}: loss {total / len(train_dl):.3f}  val 10-class {fine:.3f}  val 3-bin {bin_acc:.3f}", flush=True)
+        fine, bin_acc, _, _ = evaluate(model, val_dl, classes, device)
+        print(f"epoch {epoch}: loss {total / len(train_dl):.3f}  val fine {fine:.3f}  val 3-bin {bin_acc:.3f}", flush=True)
         if bin_acc >= best:
             best = bin_acc
             torch.save({"model": model.state_dict(), "classes": classes, "size": args.size}, args.out)
 
     model.load_state_dict(torch.load(args.out, map_location=device)["model"])
-    fine, bin_acc, conf = evaluate(model, test_dl, classes, device)
-    print(f"\nTEST  10-class acc {fine:.3f}   3-bin acc {bin_acc:.3f}\n")
+    fine, bin_acc, conf, per_source = evaluate(model, test_dl, classes, device, [sources[i] for i in te])
+    print(f"\nTEST  {len(classes)}-class acc {fine:.3f}   3-bin acc {bin_acc:.3f}\n")
     print_confusion(conf)
+    print("\n3-bin acc by source: " + "  ".join(f"{s} {a:.3f}" for s, a in per_source.items()))
     print(f"saved {args.out}")
 
 

@@ -1,6 +1,8 @@
-# Maps the Garbage Dataset's 10 fine-grained classes to 3 disposal bins.
-# Edit this to match local rules -- no retraining needed.
+# Maps the model's fine-grained classes to 3 disposal bins (Seattle rules).
+# Changing a class's bin needs no retraining; adding a class does.
 BIN_OF = {
+    "plastic_bag": "trash",  # Seattle: plastic bags go in garbage
+    "styrofoam": "trash",
     "biological": "compost",
     "cardboard": "recycling",
     "glass": "recycling",

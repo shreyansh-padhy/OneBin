@@ -35,3 +35,9 @@ checkpoints/
 *.log
 real/
 *.pyc
+
+# Datasets (rebuilt by import_data.py; only the source list is tracked)
+data/**
+!data/
+!data/combined/
+!data/combined/SOURCES.md
