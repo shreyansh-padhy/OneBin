@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, Cpu, Info, Volume2, VolumeX } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { AlertTriangle, Cpu, Info } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
 import { isSerialConnected, sendBinCommand } from "@/lib/serial";
 import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
@@ -41,42 +41,7 @@ export default function VerdictCard({
   photo?: string | null;
 }) {
   const style = BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash;
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [speaking, setSpeaking] = useState(false);
   const [iotFired, setIotFired] = useState(false);
-
-  // Native Web Speech synthesis readout (zero external API keys)
-  const speakVerdict = useCallback(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-
-    window.speechSynthesis.cancel(); // Stop any active speech
-
-    const binName = verdict.bin.charAt(0).toUpperCase() + verdict.bin.slice(1);
-    const itemName = itemLabel(verdict.item);
-    let speechText = `${binName}! Looks like ${itemName}.`;
-
-    if (verdict.warnings.length > 0) {
-      speechText += ` Warning: ${verdict.warnings[0]}`;
-    } else if (verdict.lowConfidence) {
-      speechText += ` Low confidence. When in doubt, put it in the trash.`;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.rate = 1.05;
-    utterance.pitch = 1.0;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-
-    window.speechSynthesis.speak(utterance);
-  }, [verdict]);
-
-  // Trigger speech on new verdict if enabled
-  useEffect(() => {
-    if (voiceEnabled) {
-      speakVerdict();
-    }
-  }, [verdict, voiceEnabled, speakVerdict]);
 
   // IoT Web Serial actuation: automatically send command if serial port is open
   useEffect(() => {
@@ -101,40 +66,11 @@ export default function VerdictCard({
           </p>
         </div>
 
-        {/* Audio Speech Controls */}
-        <div className="flex items-center gap-1.5">
-          {iotFired && (
-            <span className="flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-[10px] font-semibold text-white animate-pulse">
-              <Cpu className="h-3 w-3" /> Lid Opened
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              if (speaking) {
-                window.speechSynthesis?.cancel();
-                setSpeaking(false);
-              } else {
-                speakVerdict();
-              }
-            }}
-            title={speaking ? "Stop voice" : "Speak verdict"}
-            className="rounded-full bg-white/80 p-2 text-slate-700 shadow-sm hover:bg-white hover:text-slate-900 transition-colors"
-          >
-            <Volume2 className={`h-4 w-4 ${speaking ? "text-emerald-600 animate-bounce" : ""}`} />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (voiceEnabled) window.speechSynthesis?.cancel();
-              setVoiceEnabled(!voiceEnabled);
-            }}
-            title={voiceEnabled ? "Mute automatic voice" : "Enable automatic voice"}
-            className="rounded-full bg-white/80 p-2 text-slate-500 shadow-sm hover:bg-white hover:text-slate-900 transition-colors"
-          >
-            {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4 text-slate-400" />}
-          </button>
-        </div>
+        {iotFired && (
+          <span className="flex items-center gap-1 rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white animate-pulse">
+            <Cpu className="h-3.5 w-3.5" /> Lid Diverter Opened
+          </span>
+        )}
       </div>
 
       {verdict.warnings.map((w) => (

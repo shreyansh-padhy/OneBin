@@ -2,7 +2,7 @@
 
 > **Automated waste classification and mechanical sorting intelligence for municipal recovery facilities.**
 > Citizens use **one single bin** — computer vision separates compost, recycling, and trash at the facility.
-> Zero API keys, zero cloud latency, zero compute costs, 100% optical sensing (no microphones).
+> Zero API keys, zero cloud latency, zero compute costs, 100% silent optical sensing (zero microphones, zero sound).
 
 Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)  
 Facility Stage Telemetry: [https://onebin.vercel.app/dashboard](https://onebin.vercel.app/dashboard)
@@ -29,7 +29,7 @@ The entire mixed waste stream is collected and transported to **centralized muni
 
 - **🏭 Facility-Grade Computer Vision**: High-speed frame classification designed for conveyor belts, chute diverters, and facility sorting lines.
 - **⚡ Instant On-Device Inference (< 50ms)**: Runs entirely client-side on facility terminals using `onnxruntime-web` with WebAssembly (WASM), Web Workers, and SIMD acceleration. Works completely offline with zero latency.
-- **👁️ 100% Optical Sensing (Zero Microphone Usage)**: All classification is strictly visual. No microphones or audio inputs are used or required.
+- **👁️ 100% Silent Optical Sensing (Zero Sound & Microphone Usage)**: All classification is strictly visual. No microphones, audio inputs, or voice synthesis are used.
 - **🔑 Zero Cloud API Keys Required**: No external paid AI API keys (Google Gemini, OpenAI, etc.). All neural network weights execute within the local sandbox.
 - **🤖 Physical IoT Actuation**: Integrated Web Serial API communicating with microcontroller hardware (`firmware/arduino_bins.ino`) to drive physical lid/conveyor servo diverters in real time.
 - **📊 Realtime Facility Telemetry**: Live stage and facility dashboard (`/dashboard`) monitoring sorting throughput, landfill diversion rates, and contamination metrics over `BroadcastChannel` and Supabase Realtime.

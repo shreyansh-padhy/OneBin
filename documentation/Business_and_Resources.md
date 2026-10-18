@@ -13,9 +13,9 @@ Today's municipal waste model forces citizens and businesses to manually segrega
   2. **🔵 Recycling (Cardboard, Paper, Clean Metals, Rigid Plastics)**
   3. **⚫ Trash / Landfill**
 
-### Optical Sensing Pipeline (Zero Microphone Dependency)
+### Optical Sensing Pipeline (Zero Sound & Microphone Dependency)
 - **100% Visual & Optical**: The classification pipeline relies strictly on high-speed camera frames capturing items on conveyor belts or sorting chutes.
-- **No Microphone or Audio Inputs**: OneBin uses **zero microphone or audio sensor inputs**. All identification, material decomposition, and Seattle municipal rule enforcement are performed via computer vision and neural network feature extraction.
+- **Zero Microphone & Sound Hardware**: OneBin uses **zero microphone inputs and zero audio/sound emissions**. All identification, material decomposition, and Seattle municipal rule enforcement are performed strictly via visual computer vision and neural network feature extraction.
 
 ---
 

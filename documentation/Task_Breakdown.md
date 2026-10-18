@@ -112,17 +112,12 @@
 - **Target Files**: `components/CameraCapture.tsx`, `components/Sorter.tsx`
 - **Delivered**: Continuous low-frequency frame inspection loop (900ms interval) with HUD scanning reticle pulse, allowing hands-free automatic waste sorting without closing the camera view.
 
-### P3: Browser-Native Voice Readout (Web Speech API)
-- **Status**: `[COMPLETED]`
-- **Target Files**: `components/VerdictCard.tsx`
-- **Delivered**: Zero-cost, zero-API-key voice synthesis using `window.speechSynthesis`. Automatically speaks the bin target, detected item, and contamination warnings, with audio replay and mute toggles.
-
-### P4: Sustainability Impact & History Telemetry
+### P3: Sustainability Impact & History Telemetry
 - **Status**: `[COMPLETED]`
 - **Target Files**: `lib/supabase.ts`, `components/StatsModal.tsx`
 - **Delivered**: Client-side scan telemetry with local persistence and optional Supabase REST sync. Features an Impact Dashboard calculating total scans, % diverted from landfill, and estimated CO₂ equivalent saved.
 
-### P5: Physical IoT Smart Bin Actuation (Web Serial API)
+### P4: Physical IoT Smart Bin Actuation (Web Serial API)
 - **Status**: `[COMPLETED]`
 - **Target Files**: `lib/serial.ts`, `components/Sorter.tsx`, `components/VerdictCard.tsx`
 - **Delivered**: Browser Web Serial connection (`navigator.serial`) at 9600 baud sending physical lid actuation commands (`'C\n'` Compost, `'R\n'` Recycling, `'T\n'` Trash) to connected Arduino/ESP32 hardware.
