@@ -1,11 +1,10 @@
 "use client";
 
-import { BarChart3, Camera, Cpu, Layers, Loader2, RotateCcw, Upload } from "lucide-react";
+import { Camera, Cpu, Layers, Loader2, RotateCcw, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import CameraCapture from "@/components/CameraCapture";
 import SerialActuatorModal from "@/components/SerialActuatorModal";
-import StatsModal from "@/components/StatsModal";
 import VerdictCard from "@/components/VerdictCard";
 import type { Classifier, Verdict } from "@/lib/classifier";
 import { isSerialConnected } from "@/lib/serial";
@@ -28,7 +27,6 @@ export default function Sorter() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   const [showSerialModal, setShowSerialModal] = useState(false);
   const [serialActive, setSerialActive] = useState(false);
 
@@ -62,14 +60,16 @@ export default function Sorter() {
       const activeVerdict = items[0]?.verdict ?? null;
       setVerdict(activeVerdict);
 
-      // Log telemetry events for all detected items
-      for (const it of items) {
-        logScanEvent({
-          bin: it.verdict.bin,
-          item: it.verdict.item,
-          confidence: it.verdict.confidence,
-          ms: it.verdict.ms,
-        });
+      // Log telemetry events for all detected items (manual mode only to prevent auto-scan spam)
+      if (!isAuto) {
+        for (const it of items) {
+          logScanEvent({
+            bin: it.verdict.bin,
+            item: it.verdict.item,
+            confidence: it.verdict.confidence,
+            ms: it.verdict.ms,
+          });
+        }
       }
     } catch (err) {
       if (!isAuto) {
@@ -109,30 +109,6 @@ export default function Sorter() {
 
   return (
     <div className="space-y-4">
-      {/* Top Utility Controls (Impact Stats & IoT Bin Actuation) */}
-      <div className="flex items-center justify-between gap-2 px-1 text-xs">
-        <button
-          type="button"
-          onClick={() => setShowStats(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
-        >
-          <BarChart3 className="h-3.5 w-3.5 text-emerald-600" />
-          <span>Impact Stats</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowSerialModal(true)}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors ${
-            serialActive
-              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-              : "border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"
-          }`}
-        >
-          <Cpu className={`h-3.5 w-3.5 ${serialActive ? "text-emerald-600 animate-pulse" : "text-slate-500"}`} />
-          <span>{serialActive ? "IoT Bin Connected" : "Connect Smart Bin"}</span>
-        </button>
-      </div>
 
       {model.status === "loading" && (
         <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
@@ -200,9 +176,9 @@ export default function Sorter() {
             </div>
           ) : (
             <p className="p-6 text-center text-sm text-slate-500">
-              Take a photo or drop an image of items on the conveyor.
+              Take a photo or drop an image of items.
               <br />
-              Multi-object detector identifies every item automatically.
+              Multi-object detector identifies and sorts items automatically.
             </p>
           )}
           {busy && (
@@ -294,8 +270,19 @@ export default function Sorter() {
         </button>
       )}
 
-      {/* Sustainability Impact Telemetry Modal */}
-      {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+      {/* Optional Physical Smart Bin Connection (Hardware) */}
+      <div className="flex items-center justify-center pt-2">
+        <button
+          type="button"
+          onClick={() => setShowSerialModal(true)}
+          className={`inline-flex items-center gap-1.5 text-xs transition-colors ${
+            serialActive ? "font-semibold text-emerald-700" : "text-slate-400 hover:text-slate-600"
+          }`}
+        >
+          <Cpu className={`h-3.5 w-3.5 ${serialActive ? "text-emerald-600 animate-pulse" : "text-slate-400"}`} />
+          <span>{serialActive ? "Smart Bin Connected (9600 baud)" : "Connect Physical Smart Bin (USB)"}</span>
+        </button>
+      </div>
 
       {/* Physical IoT Smart Bin Actuation Modal */}
       {showSerialModal && (

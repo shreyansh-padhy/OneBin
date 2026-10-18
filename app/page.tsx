@@ -1,16 +1,12 @@
 import Link from "next/link";
-import MunicipalitySelector from "@/components/MunicipalitySelector";
 import Sorter from "@/components/Sorter";
 
 export default function Home() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-md space-y-5 px-4 py-8">
-      <header className="space-y-3 text-center">
-        <div className="flex items-center justify-between">
-          <span className="text-xl font-black tracking-tight text-slate-900">♻️ OneBin</span>
-          <MunicipalitySelector />
-        </div>
-        <p className="text-sm text-slate-600">Compost, recycling, or trash? Show it one item.</p>
+      <header className="space-y-1.5 text-center">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">♻️ OneBin</h1>
+        <p className="text-sm text-slate-600">Compost, recycling, or trash? Multi-item sorting.</p>
       </header>
 
       <Sorter />
