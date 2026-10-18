@@ -81,7 +81,10 @@ export async function classifyWasteImage(
   mimeType = "image/jpeg"
 ): Promise<ClassificationResult> {
   const ai = getGeminiClient();
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+  const candidateModels = [primaryModel, "gemini-3.7-flash", "gemini-3.8-flash"].filter(
+    (v, i, a) => a.indexOf(v) === i
+  );
 
   // Clean data URL prefix if present
   let cleanBase64 = base64Data;
@@ -93,29 +96,44 @@ export async function classifyWasteImage(
     cleanBase64 = dataUriMatch[2];
   }
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [
-      {
-        inlineData: {
-          data: cleanBase64,
-          mimeType: resolvedMimeType,
-        },
-      },
-      "Analyze this item and classify it for waste sorting according to Seattle municipal rules.",
-    ],
-    config: {
-      systemInstruction: SEATTLE_SYSTEM_INSTRUCTION,
-      responseMimeType: "application/json",
-      responseSchema: classificationSchema,
-    },
-  });
+  let responseText: string | null = null;
+  let lastError: unknown = null;
 
-  if (!response.text) {
-    throw new Error("Gemini API returned an empty response.");
+  for (const m of candidateModels) {
+    try {
+      const resp = await ai.models.generateContent({
+        model: m,
+        contents: [
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: resolvedMimeType,
+            },
+          },
+          "Analyze this item and classify it for waste sorting according to Seattle municipal rules.",
+        ],
+        config: {
+          systemInstruction: SEATTLE_SYSTEM_INSTRUCTION,
+          responseMimeType: "application/json",
+          responseSchema: classificationSchema,
+        },
+      });
+
+      if (resp.text) {
+        responseText = resp.text;
+        break;
+      }
+    } catch (err) {
+      console.warn(`[Gemini Fallback] Model ${m} failed, attempting next model:`, err);
+      lastError = err;
+    }
   }
 
-  const result: ClassificationResult = JSON.parse(response.text);
+  if (!responseText) {
+    throw lastError || new Error("Gemini API returned an empty response.");
+  }
+
+  const result: ClassificationResult = JSON.parse(responseText);
 
   // Enforce Seattle safety post-processing safeguards
   const lowerItem = (result.itemName || "").toLowerCase();
