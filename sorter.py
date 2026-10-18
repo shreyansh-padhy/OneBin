@@ -31,8 +31,11 @@ def square_crop(box, pad, width, height):
     return x, y, x + side, y + side
 
 
+DEFAULT_CLASSIFIER = ROOT / "checkpoints/best_taco.pt" if (ROOT / "checkpoints/best_taco.pt").exists() else ROOT / "checkpoints/best.pt"
+
+
 class Sorter:
-    def __init__(self, detector=ROOT / "checkpoints/detector.pt", classifier=ROOT / "checkpoints/best.pt",
+    def __init__(self, detector=ROOT / "checkpoints/detector.pt", classifier=DEFAULT_CLASSIFIER,
                  det_conf=0.35, pad=0.1):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Without a trained detector, every photo is treated as one item.
