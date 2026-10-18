@@ -65,7 +65,8 @@ export default function BoundingBoxOverlay({
               isSelected ? "ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-lg scale-[1.01]" : "opacity-85 hover:opacity-100"
             }`}
           >
-            <div className="absolute -top-6 left-0 flex items-center gap-1">
+            {/* label above the box, or just inside it when the box touches the top edge */}
+            <div className={`absolute flex items-center gap-1 whitespace-nowrap ${y0 / imageHeight < 0.08 ? "left-1 top-1" : "-top-6 left-0"}`}>
               <span
                 className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow ${colors.badge}`}
               >

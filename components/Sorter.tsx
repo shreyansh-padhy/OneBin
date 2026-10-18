@@ -170,14 +170,21 @@ export default function Sorter() {
             setDragging(false);
             classifyFile(e.dataTransfer.files[0]);
           }}
-          className={`relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-white ${
-            dragging ? "border-recycling bg-recycling-light" : "border-slate-300"
-          }`}
+          // Square drop zone until a photo is loaded, then the photo's own shape (capped for tall photos)
+          className={`relative flex w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-white ${
+            photo && imageDims ? "max-h-[75vh]" : "aspect-square"
+          } ${dragging ? "border-recycling bg-recycling-light" : "border-slate-300"}`}
+          style={photo && imageDims ? { aspectRatio: `${imageDims.width} / ${imageDims.height}` } : undefined}
         >
           {photo ? (
-            <div className="relative h-full w-full overflow-hidden">
+            // Size this box to the photo's exact aspect ratio (whole photo visible, no cropping)
+            // so BoundingBoxOverlay's percentage positions land on the right pixels.
+            <div
+              className={`relative ${!imageDims ? "h-full w-full" : imageDims.width >= imageDims.height ? "w-full" : "h-full"}`}
+              style={imageDims ? { aspectRatio: `${imageDims.width} / ${imageDims.height}` } : undefined}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element -- local data URL, nothing to optimize */}
-              <img src={photo} alt="Item being sorted" className="h-full w-full object-cover" />
+              <img src={photo} alt="Item being sorted" className="h-full w-full object-contain" />
               {imageDims && sortedItems.length > 0 && sortedItems[0].box && (
                 <BoundingBoxOverlay
                   items={sortedItems}

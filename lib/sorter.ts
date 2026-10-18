@@ -55,6 +55,18 @@ function nonMaxSuppression(boxes: BoundingBox[], iouThreshold: number): Bounding
   return kept;
 }
 
+/**
+ * Region to classify for one detected item: the box plus `pad` context on each side, grown to
+ * a square and shifted to stay inside the image. The classifier center-crops to a square, so a
+ * tall or wide crop would lose the item's ends. Mirrors square_crop() in sorter.py.
+ */
+export function squareCrop(box: BoundingBox, pad: number, width: number, height: number): [number, number, number, number] {
+  const side = Math.min(Math.max(box.x1 - box.x0, box.y1 - box.y0) * (1 + 2 * pad), width, height);
+  const x = Math.min(Math.max(0, (box.x0 + box.x1 - side) / 2), width - side);
+  const y = Math.min(Math.max(0, (box.y0 + box.y1 - side) / 2), height - side);
+  return [x, y, side, side];
+}
+
 export class TwoStageSorter {
   constructor(
     private ort: typeof Ort,
@@ -78,15 +90,7 @@ export class TwoStageSorter {
     const sorted: SortedItem[] = [];
 
     for (const box of boxes) {
-      const bw = box.x1 - box.x0;
-      const bh = box.y1 - box.y0;
-      const px = bw * pad;
-      const py = bh * pad;
-
-      const cropX = Math.max(0, box.x0 - px);
-      const cropY = Math.max(0, box.y0 - py);
-      const cropW = Math.min(width, box.x1 + px) - cropX;
-      const cropH = Math.min(height, box.y1 + py) - cropY;
+      const [cropX, cropY, cropW, cropH] = squareCrop(box, pad, width, height);
 
       const cropCanvas = document.createElement("canvas");
       cropCanvas.width = Math.max(1, Math.round(cropW));
@@ -112,7 +116,17 @@ export class TwoStageSorter {
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return [];
 
-    ctx.drawImage(source, 0, 0, width, height, 0, 0, detSize, detSize);
+    // Letterbox like Ultralytics: keep the aspect ratio and pad with gray (114). Stretching the
+    // frame to a square distorts items, so the detector misses them and mis-sizes boxes.
+    const r = Math.min(detSize / width, detSize / height);
+    const newW = Math.round(width * r);
+    const newH = Math.round(height * r);
+    const padX = Math.round((detSize - newW) / 2 - 0.1);
+    const padY = Math.round((detSize - newH) / 2 - 0.1);
+    ctx.fillStyle = "rgb(114, 114, 114)";
+    ctx.fillRect(0, 0, detSize, detSize);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(source, 0, 0, width, height, padX, padY, newW, newH);
     const rgba = ctx.getImageData(0, 0, detSize, detSize).data;
     const plane = detSize * detSize;
     const chw = new Float32Array(3 * plane);
@@ -135,16 +149,14 @@ export class TwoStageSorter {
     const confThresh = this.detectorMeta.confidenceThreshold || 0.35;
     const candidates: BoundingBox[] = [];
 
-    const scaleX = width / detSize;
-    const scaleY = height / detSize;
-
     for (let i = 0; i < numAnchors; i++) {
       const conf = outputData[4 * numAnchors + i];
       if (conf >= confThresh) {
-        const cx = outputData[i] * scaleX;
-        const cy = outputData[numAnchors + i] * scaleY;
-        const w = outputData[2 * numAnchors + i] * scaleX;
-        const h = outputData[3 * numAnchors + i] * scaleY;
+        // Undo the letterbox: detector pixels -> original image pixels
+        const cx = (outputData[i] - padX) / r;
+        const cy = (outputData[numAnchors + i] - padY) / r;
+        const w = outputData[2 * numAnchors + i] / r;
+        const h = outputData[3 * numAnchors + i] / r;
 
         candidates.push({
           x0: Math.max(0, cx - w / 2),

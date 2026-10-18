@@ -19,6 +19,18 @@ ROOT = Path(__file__).parent
 BIN_COLOR = {"compost": (46, 160, 67), "recycling": (31, 111, 235), "trash": (80, 80, 80)}
 
 
+def square_crop(box, pad, width, height):
+    """Region to classify for one item: the box plus `pad` context on each side (context
+    helps the classifier), grown to a square and shifted to stay inside the image. The
+    classifier center-crops to a square, so a tall or wide crop would lose the item's ends.
+    Mirrors squareCrop() in lib/sorter.ts."""
+    x0, y0, x1, y1 = box
+    side = min(max(x1 - x0, y1 - y0) * (1 + 2 * pad), width, height)
+    x = min(max(0, (x0 + x1 - side) / 2), width - side)
+    y = min(max(0, (y0 + y1 - side) / 2), height - side)
+    return x, y, x + side, y + side
+
+
 class Sorter:
     def __init__(self, detector=ROOT / "checkpoints/detector.pt", classifier=ROOT / "checkpoints/best.pt",
                  det_conf=0.35, pad=0.1):
@@ -51,11 +63,7 @@ class Sorter:
             det = self.detector.predict(img, conf=self.det_conf, verbose=False)[0]
             boxes = [tuple(b) for b in det.boxes.xyxy.tolist()]
             det_confs = det.boxes.conf.tolist()
-        crops = []
-        for x0, y0, x1, y1 in boxes:
-            px, py = (x1 - x0) * self.pad, (y1 - y0) * self.pad  # context helps the classifier
-            crops.append(img.crop((max(0, x0 - px), max(0, y0 - py),
-                                   min(img.width, x1 + px), min(img.height, y1 + py))))
+        crops = [img.crop(square_crop(b, self.pad, img.width, img.height)) for b in boxes]
         if not crops:
             crops, boxes, det_confs = [img], [None], [None]
         probs, bin_probs = self.classify(crops)
