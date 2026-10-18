@@ -71,4 +71,5 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
 - Train and inference must share preprocessing and model construction. Always go through `make_transforms`, `build_model` and `bin_matrix` instead of duplicating them, and take the image size from the checkpoint rather than hardcoding it.
 - The class order comes from `ImageFolder` (alphabetical folder names) and is stored in the checkpoint. Don't hardcode class indices.
 - Importing `train.py` must stay cheap: training only runs under `main()`, so keep heavy work out of module scope there.
-- `checkpoints/`, `train.log`, `__pycache__/` and the dataset are generated artifacts. Don't commit them.
+- `train.log`, `__pycache__/`, `runs/` and the dataset are generated artifacts. Don't commit them.
+- Checkpoints that others need (`best.pt`, `detector.pt`, `best_taco.pt`) are committed through Git LFS (`.gitattributes`: `checkpoints/*.pt`). `checkpoints/` is still in `.gitignore`, so add them with `git add -f`; leave scratch checkpoints uncommitted.
