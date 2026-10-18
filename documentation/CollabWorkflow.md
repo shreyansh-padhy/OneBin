@@ -29,7 +29,7 @@
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Successfully connected & verified GitHub <-> Vercel <-> Supabase 3-way integration | 2026-10-17 |
 | **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Built and verified Live Stage Telemetry Scoreboard (/dashboard), Municipality Rules Engine, and UW Dataset Opt-In (Vercel Blob) | 2026-10-17 |
-| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #5.1: completely removed all sound, Web Speech API synthesis, volume icons, and audio controls from VerdictCard.tsx; updated documentation to enforce 100% silent optical sensing | 2026-10-17 |
+| **Auditor Agent (`cf506aec`)** | `[ACTIVE]` | Merging origin/model/taco-detector into main and verifying TACO multi-object detector integration and ONNX pipeline | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | In-browser classifier built on branch `feat/in-browser-classifier`; merging into main | 2026-10-17 |
 
 ---
