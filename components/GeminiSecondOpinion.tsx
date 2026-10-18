@@ -80,12 +80,21 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
   }
 
   if (result) {
-    const binColor =
-      result.bin === "compost"
-        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-        : result.bin === "recycling"
-        ? "bg-blue-100 text-blue-800 border-blue-300"
-        : "bg-slate-800 text-white border-slate-900";
+    const isUnidentified =
+      result.confidence < 0.35 ||
+      result.itemName.toLowerCase().includes("unidentified") ||
+      result.itemName.toLowerCase().includes("no identifiable") ||
+      result.itemName.toLowerCase().includes("unknown");
+
+    const binColor = isUnidentified
+      ? "bg-slate-100 text-slate-700 border-slate-300"
+      : result.bin === "compost"
+      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+      : result.bin === "recycling"
+      ? "bg-blue-100 text-blue-800 border-blue-300"
+      : "bg-slate-800 text-white border-slate-900";
+
+    const displayBadge = isUnidentified ? "AMBIGUOUS / UNKNOWN" : result.bin;
 
     return (
       <section
@@ -107,7 +116,7 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
 
         <div className="flex flex-wrap items-baseline gap-2">
           <span className={`inline-block rounded-md border px-2 py-0.5 text-xs font-bold uppercase ${binColor}`}>
-            {result.bin}
+            {displayBadge}
           </span>
           <span className="font-semibold text-sm text-slate-900">{result.itemName}</span>
           {result.material && <span className="text-xs text-slate-500">· {result.material}</span>}

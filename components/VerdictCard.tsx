@@ -77,13 +77,17 @@ export default function VerdictCard({
         <div>
           <div className="flex items-center gap-2">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Destination Stream</p>
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${style.badge}`}>
-              {verdict.bin.toUpperCase()}
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${verdict.lowConfidence ? "bg-amber-100 text-amber-900 border-amber-300" : style.badge}`}>
+              {verdict.lowConfidence ? "UNSURE / AMBIGUOUS" : verdict.bin.toUpperCase()}
             </span>
           </div>
-          <h2 className={`mt-0.5 text-3xl font-black tracking-tight ${style.text}`}>{meta.binDisplay[verdict.bin] ?? verdict.bin}</h2>
+          <h2 className={`mt-0.5 text-3xl font-black tracking-tight ${verdict.lowConfidence ? "text-slate-700" : style.text}`}>
+            {verdict.lowConfidence ? "Needs Clearer View" : (meta.binDisplay[verdict.bin] ?? verdict.bin)}
+          </h2>
           <p className="mt-1 text-sm text-slate-700">
-            Identified: <span className="font-semibold text-slate-900">{itemLabel(verdict.item)}</span> · <span className="font-semibold">{pct(verdict.confidence)}</span> confidence
+            {verdict.lowConfidence
+              ? `Uncertain guess: ${itemLabel(verdict.item)} (${pct(verdict.confidence)})`
+              : <>Identified: <span className="font-semibold text-slate-900">{itemLabel(verdict.item)}</span> · <span className="font-semibold">{pct(verdict.confidence)}</span> confidence</>}
           </p>
         </div>
 
