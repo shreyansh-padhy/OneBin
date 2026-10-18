@@ -1,6 +1,7 @@
 -- ==============================================================================
 -- OneBin: Supabase Production Schema & Realtime Telemetry Setup
 -- Project Ref: diiyljscftybrygsokdf
+-- Best practices applied: Row Level Security, Grants, Realtime & Public Storage
 -- ==============================================================================
 
 -- 1. Create the scans telemetry table
@@ -18,6 +19,24 @@ create table if not exists public.scans (
 create index if not exists idx_scans_created_at on public.scans (created_at desc);
 create index if not exists idx_scans_bin on public.scans (bin);
 
+-- Enable Row Level Security (RLS)
+alter table public.scans enable row level security;
+
+-- Allow anonymous inserts (from bin kiosks and user feedback widget)
+create policy "Allow anonymous inserts" on public.scans
+  for insert to anon
+  with check (true);
+
+-- Allow anonymous reads (for live stage dashboard telemetry)
+create policy "Allow anonymous reads" on public.scans
+  for select to anon
+  using (true);
+
+-- Grant table & sequence permissions to anon role
+grant usage on schema public to anon;
+grant select, insert on public.scans to anon;
+grant usage, select on all sequences in schema public to anon;
+
 -- 2. Enable Realtime WebSocket broadcasts on scans table
 alter publication supabase_realtime add table public.scans;
 
@@ -28,14 +47,14 @@ on conflict (id) do nothing;
 
 -- 4. Storage upload & read security policies
 create policy "Allow public uploads" on storage.objects 
-  for insert with check (bucket_id = 'waste-dataset');
+  for insert to anon with check (bucket_id = 'waste-dataset');
 
 create policy "Allow public reads" on storage.objects 
-  for select using (bucket_id = 'waste-dataset');
+  for select to anon using (bucket_id = 'waste-dataset');
 
 -- 5. Analytics RPC for instant diversion stats calculation
 create or replace function get_bin_analytics()
-returns json language plpgsql as $$
+returns json language plpgsql security definer as $$
 declare
   total_count int;
   compost_count int;
