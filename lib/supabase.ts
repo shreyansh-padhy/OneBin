@@ -1,6 +1,8 @@
 // OneBin Sustainability Impact & Scan Telemetry
 // Dual-layer: logs locally via localStorage, BroadcastChannel for zero-latency screen syncing,
-// and optionally syncs with Supabase free-tier PostgreSQL & Realtime WebSockets.
+// and syncs with Supabase PostgreSQL & Storage via @supabase/supabase-js SDK.
+
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export interface ScanEvent {
   id?: string;
@@ -23,6 +25,12 @@ export interface ImpactStats {
 const STORAGE_KEY = "onebin_scan_history";
 const MAX_LOCAL_EVENTS = 100;
 const CHANNEL_NAME = "onebin_live_scans";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+export const supabase: SupabaseClient | null =
+  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 export function getLocalScanHistory(): ScanEvent[] {
   if (typeof window === "undefined") return [];
@@ -69,27 +77,15 @@ export async function logScanEvent(event: {
     }
   }
 
-  // 3. Supabase Free Tier REST Sync (if configured)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (supabaseUrl && supabaseKey) {
+  // 3. Supabase SDK Database Sync (if configured via Vercel integration or .env)
+  if (supabase) {
     try {
-      await fetch(`${supabaseUrl}/rest/v1/scans`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          bin: fullEvent.bin,
-          item: fullEvent.item,
-          confidence: fullEvent.confidence,
-          ms: fullEvent.ms,
-          created_at: fullEvent.timestamp,
-        }),
+      await supabase.from("scans").insert({
+        bin: fullEvent.bin,
+        item: fullEvent.item,
+        confidence: fullEvent.confidence,
+        ms: fullEvent.ms,
+        created_at: fullEvent.timestamp,
       });
     } catch (err) {
       console.warn("[OneBin Telemetry] Supabase sync skipped:", err);
@@ -139,20 +135,15 @@ export function subscribeToLiveScans(onScan: (event: ScanEvent) => void): () => 
 }
 
 export async function fetchRecentScans(): Promise<ScanEvent[]> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (supabaseUrl && supabaseKey) {
+  if (supabase) {
     try {
-      const res = await fetch(`${supabaseUrl}/rest/v1/scans?select=*&order=created_at.desc&limit=50`, {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-        },
-      });
-      if (res.ok) {
-        const rows = await res.json();
-        return rows.map((r: { id: string; bin: string; item: string; confidence: number; created_at: string; ms?: number }) => ({
+      const { data, error } = await supabase
+        .from("scans")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (data && !error) {
+        return data.map((r: { id: string; bin: string; item: string; confidence: number; created_at: string; ms?: number }) => ({
           id: r.id,
           bin: r.bin,
           item: r.item,
@@ -258,13 +249,10 @@ export async function submitDatasetFeedback(feedback: DatasetFeedback): Promise<
     }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   let publicUrl: string | undefined = undefined;
 
-  // 2. Upload photo to Supabase Storage if configured
-  if (supabaseUrl && supabaseKey && feedback.photoBase64) {
+  // 2. Upload photo to Supabase Storage & record metadata if configured
+  if (supabase && feedback.photoBase64) {
     try {
       const matches = feedback.photoBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
       const base64Data = matches ? matches[2] : feedback.photoBase64;
@@ -279,45 +267,35 @@ export async function submitDatasetFeedback(feedback: DatasetFeedback): Promise<
       const cleanItem = finalItem.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
       const filename = `${finalBin}/${Date.now()}-${cleanItem}.jpg`;
 
-      // Upload to 'waste-dataset' bucket
-      const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/waste-dataset/${filename}`, {
-        method: "POST",
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          "Content-Type": "image/jpeg",
-          "x-upsert": "true",
-        },
-        body: blob,
-      });
+      // Upload to 'waste-dataset' bucket via Supabase SDK
+      const { error: uploadErr } = await supabase.storage
+        .from("waste-dataset")
+        .upload(filename, blob, {
+          contentType: "image/jpeg",
+          upsert: true,
+        });
 
-      if (uploadRes.ok) {
-        publicUrl = `${supabaseUrl}/storage/v1/object/public/waste-dataset/${filename}`;
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage
+          .from("waste-dataset")
+          .getPublicUrl(filename);
+        publicUrl = urlData.publicUrl;
       }
 
       // 3. Record metadata in scans table
-      await fetch(`${supabaseUrl}/rest/v1/scans`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`,
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          bin: finalBin,
-          item: finalItem,
-          confidence: feedback.confidence,
-          image_url: publicUrl,
-          created_at: new Date().toISOString(),
-        }),
+      await supabase.from("scans").insert({
+        bin: finalBin,
+        item: finalItem,
+        confidence: feedback.confidence,
+        image_url: publicUrl,
+        created_at: new Date().toISOString(),
       });
 
       return {
         success: true,
         message: feedback.userConfirmed
           ? "Confirmed! Added to verified dataset."
-          : `Correction recorded: Marked as ${finalBin.toUpperCase()}. Added to dataset.`,
+          : `Correction recorded: Marked as ${finalBin.toUpperCase()} (${finalItem}). Added to dataset.`,
         url: publicUrl,
       };
     } catch (err) {
