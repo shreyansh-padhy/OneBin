@@ -1,0 +1,9 @@
+{
+  "source": "detector.pt",
+  "architecture": "YOLO26-s",
+  "size": 640,
+  "confidenceThreshold": 0.35,
+  "iouThreshold": 0.45,
+  "classes": ["item"],
+  "pad": 0.1
+}

@@ -1,25 +1,30 @@
 "use client";
 
-import { BarChart3, Camera, Cpu, Loader2, RotateCcw, Upload } from "lucide-react";
+import { BarChart3, Camera, Cpu, Layers, Loader2, RotateCcw, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import CameraCapture from "@/components/CameraCapture";
 import SerialActuatorModal from "@/components/SerialActuatorModal";
 import StatsModal from "@/components/StatsModal";
 import VerdictCard from "@/components/VerdictCard";
-import { type Classifier, loadClassifier, type Verdict } from "@/lib/classifier";
+import type { Classifier, Verdict } from "@/lib/classifier";
 import { isSerialConnected } from "@/lib/serial";
+import { loadSorter, type SortedItem, type TwoStageSorter } from "@/lib/sorter";
 import { logScanEvent } from "@/lib/supabase";
 
 type ModelState = { status: "loading"; progress: number | null } | { status: "ready" } | { status: "error"; message: string };
 
-/** Camera / upload -> in-browser model -> verdict with Auto-Scan, Telemetry & IoT. */
+/** Camera / upload -> in-browser model -> verdict with Auto-Scan, Multi-Item Bounding Boxes, Telemetry & IoT. */
 export default function Sorter() {
-  const classifier = useRef<Classifier | null>(null);
+  const sorter = useRef<TwoStageSorter | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [model, setModel] = useState<ModelState>({ status: "loading", progress: 0 });
   const [cameraOpen, setCameraOpen] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
+  const [sortedItems, setSortedItems] = useState<SortedItem[]>([]);
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [imageDims, setImageDims] = useState<{ width: number; height: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -29,9 +34,9 @@ export default function Sorter() {
 
   function startLoading() {
     setModel({ status: "loading", progress: 0 });
-    loadClassifier((progress) => setModel({ status: "loading", progress }))
-      .then((c) => {
-        classifier.current = c;
+    loadSorter((progress) => setModel({ status: "loading", progress }))
+      .then((s) => {
+        sorter.current = s;
         setModel({ status: "ready" });
       })
       .catch((err: Error) => setModel({ status: "error", message: err.message }));
@@ -48,17 +53,24 @@ export default function Sorter() {
     setBusy(true);
 
     try {
-      const c = classifier.current ?? (await loadClassifier());
-      const res = await c.classify(frame, frame.width, frame.height);
-      setVerdict(res);
+      const s = sorter.current ?? (await loadSorter());
+      const items = await s.sort(frame, frame.width, frame.height);
+      setSortedItems(items);
+      setSelectedIdx(0);
+      setImageDims({ width: frame.width, height: frame.height });
 
-      // Log telemetry event (local history + optional Supabase sync)
-      logScanEvent({
-        bin: res.bin,
-        item: res.item,
-        confidence: res.confidence,
-        ms: res.ms,
-      });
+      const activeVerdict = items[0]?.verdict ?? null;
+      setVerdict(activeVerdict);
+
+      // Log telemetry events for all detected items
+      for (const it of items) {
+        logScanEvent({
+          bin: it.verdict.bin,
+          item: it.verdict.item,
+          confidence: it.verdict.confidence,
+          ms: it.verdict.ms,
+        });
+      }
     } catch (err) {
       if (!isAuto) {
         setError(`Classification failed: ${(err as Error).message}`);
@@ -87,6 +99,9 @@ export default function Sorter() {
   function reset() {
     setPhoto(null);
     setVerdict(null);
+    setSortedItems([]);
+    setSelectedIdx(0);
+    setImageDims(null);
     setError(null);
   }
 
@@ -123,13 +138,13 @@ export default function Sorter() {
         <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-600">
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Loading the sorting model
+            Loading the multi-item sorting models
             {model.progress !== null && ` · ${Math.round(model.progress * 100)}%`}
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full bg-slate-400 transition-all" style={{ width: `${(model.progress ?? 0) * 100}%` }} />
           </div>
-          <p className="mt-1 text-xs text-slate-400">About 42 MB, downloaded once, then cached.</p>
+          <p className="mt-1 text-xs text-slate-400">Two-stage edge models (YOLO detector + classifier), cached locally.</p>
         </div>
       )}
       {model.status === "error" && (
@@ -160,13 +175,27 @@ export default function Sorter() {
           }`}
         >
           {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- local data URL, nothing to optimize
-            <img src={photo} alt="Item being sorted" className="h-full w-full object-cover" />
+            <div className="relative h-full w-full overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local data URL, nothing to optimize */}
+              <img src={photo} alt="Item being sorted" className="h-full w-full object-cover" />
+              {imageDims && sortedItems.length > 0 && sortedItems[0].box && (
+                <BoundingBoxOverlay
+                  items={sortedItems}
+                  imageWidth={imageDims.width}
+                  imageHeight={imageDims.height}
+                  selectedIdx={selectedIdx}
+                  onSelect={(idx) => {
+                    setSelectedIdx(idx);
+                    setVerdict(sortedItems[idx].verdict);
+                  }}
+                />
+              )}
+            </div>
           ) : (
             <p className="p-6 text-center text-sm text-slate-500">
-              Take a photo of one item, or drop an image here.
+              Take a photo or drop an image of items on the conveyor.
               <br />
-              Fill the frame with the item for the best result.
+              Multi-object detector identifies every item automatically.
             </p>
           )}
           {busy && (
@@ -208,12 +237,44 @@ export default function Sorter() {
         </div>
       )}
 
-      {busy && !ready && <p className="text-center text-sm text-slate-500">Waiting for the model to finish loading…</p>}
+      {busy && !ready && <p className="text-center text-sm text-slate-500">Waiting for models to finish loading…</p>}
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+
+      {/* Multi-Item Detected Selector Pill Bar */}
+      {sortedItems.length > 1 && sortedItems[0].box && (
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+            <span className="flex items-center gap-1.5 text-emerald-700">
+              <Layers className="h-4 w-4" /> Multi-Item Stream Detected
+            </span>
+            <span className="text-slate-500">{sortedItems.length} items found</span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {sortedItems.map((it, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSelectedIdx(idx);
+                  setVerdict(it.verdict);
+                }}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
+                  idx === selectedIdx
+                    ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <span>#{idx + 1} {it.verdict.bin.toUpperCase()}</span>
+                <span className="text-[10px] opacity-75">({it.verdict.item})</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       
-      {/* Live Verdict Display (works both in manual photo preview and in live Auto-Scan mode) */}
-      {verdict && classifier.current && (
-        <VerdictCard verdict={verdict} meta={classifier.current.meta} photo={photo} />
+      {/* Live Verdict Display for currently active item */}
+      {verdict && sorter.current && (
+        <VerdictCard verdict={verdict} meta={sorter.current.classifier.meta} photo={photo} />
       )}
 
       {(verdict || error) && !cameraOpen && (
