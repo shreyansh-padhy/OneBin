@@ -4,6 +4,7 @@ set of fine classes (see bins.py), with duplicate images removed.
     python import_data.py              # all sources
     python import_data.py --cap 1000   # at most 1000 images per (source, class)
     python import_data.py --skip realwaste
+    python import_data.py --skip taco     # without TACO crops (needs prepare_taco.py)
 
 Files are named <source>__<original>.jpg so train.py can report accuracy per source.
 """
@@ -75,7 +76,7 @@ SOURCES = {
         },
     ),
     "rw": dict(
-        name="RealWaste (Single & Kirkland, Information 2023)",
+        name="RealWaste (Single, Iranmanesh & Raad, Information 14(12):633, 2023)",
         license="CC BY-NC-SA 4.0 (non-commercial)",
         url="https://archive.ics.uci.edu/static/public/908/realwaste.zip",
         subdir="realwaste-main/RealWaste",
@@ -103,10 +104,104 @@ SOURCES = {
 }
 IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
+# TACO (built by prepare_taco.py): crops of each annotated item, mapped with Seattle rules.
+# Categories not listed are skipped as ambiguous (small lids, "Other plastic", coated
+# paper bags, pizza boxes, paper straws, "Unlabeled litter").
+TACO_MAP = {
+    "Aluminium foil": "metal", "Scrap metal": "metal",
+    "Aerosol": "metal", "Drink can": "metal", "Food Can": "metal",
+    "Battery": "battery",
+    "Clear plastic bottle": "plastic", "Other plastic bottle": "plastic",
+    "Disposable plastic cup": "plastic", "Other plastic cup": "plastic",
+    "Disposable food container": "plastic", "Other plastic container": "plastic",
+    "Spread tub": "plastic", "Tupperware": "plastic",
+    "Glass bottle": "glass", "Glass jar": "glass",
+    "Corrugated carton": "cardboard", "Egg carton": "cardboard", "Toilet tube": "cardboard",
+    "Drink carton": "cardboard", "Meal carton": "cardboard", "Other carton": "cardboard",
+    "Normal paper": "paper", "Magazine paper": "paper", "Wrapping paper": "paper",
+    "Paper bag": "paper",
+    "Paper cup": "paper",  # recycling unless marked compostable -- not visible in photos
+    "Tissues": "tissue",
+    "Food waste": "biological",
+    "Crisp packet": "plastic_bag", "Other plastic wrapper": "plastic_bag",
+    "Plastic film": "plastic_bag", "Garbage bag": "plastic_bag",
+    "Polypropylene bag": "plastic_bag", "Single-use carrier bag": "plastic_bag",
+    "Foam cup": "styrofoam", "Foam food container": "styrofoam", "Styrofoam piece": "styrofoam",
+    "Shoe": "shoes",
+    # Seattle: loose items under ~3 in jam sorting machines -> garbage
+    "Metal bottle cap": "trash", "Plastic bottle cap": "trash", "Pop tab": "trash",
+    "Broken glass": "trash", "Glass cup": "trash",
+    "Cigarette": "trash", "Plastic glooves": "trash", "Plastic utensils": "trash",
+    "Plastic straw": "trash", "Rope & strings": "trash", "Six pack rings": "trash",
+    "Squeezable tube": "trash", "Aluminium blister pack": "trash", "Carded blister pack": "trash",
+}
+TACO_CAPS = {"Cigarette": 300}  # mostly tiny butts; don't let them swamp "trash"
+TACO_MIN_SIDE = 32  # px in the 1024px images; smaller crops are unreadable
+TACO_PAD = 0.1      # same context padding sorter.py uses at inference
+TACO_SPLITS = ["train", "val", "test"]
+SOURCES["taco"] = dict(
+    name="TACO: Trash Annotations in Context (Proença & Simões, arXiv:2003.06975), item crops",
+    license="CC BY 4.0",
+    crops=True,
+    subdir="",
+    # <split>/<class>/ folders; the split is kept so TACO test photos stay test-only
+    classes={f"{s}/{c}": c for s in TACO_SPLITS for c in sorted(set(TACO_MAP.values()))},
+)
+
+
+def build_taco_crops(dest):
+    """Crop every mapped TACO annotation out of data/taco_yolo's resized images."""
+    import json
+    yolo = ROOT / "data/taco_yolo/images"
+    assert yolo.exists(), "run prepare_taco.py first"
+    split_of = {p.stem: p.parent.name for p in yolo.glob("*/*.jpg")}
+    per_cat = defaultdict(list)
+    for f in ["annotations.json", "annotations_unofficial.json"]:
+        d = json.loads((RAW / "taco" / f).read_text(encoding="utf-8"))
+        names = {c["id"]: c["name"] for c in d["categories"]}
+        imgs = {im["id"]: im for im in d["images"]}
+        for a in d["annotations"]:
+            im = imgs[a["image_id"]]
+            stem = im["file_name"].rsplit(".", 1)[0].replace("/", "_")
+            cat = names[a["category_id"]]
+            if cat in TACO_MAP and stem in split_of:
+                per_cat[cat].append((stem, im["width"], a["id"], a["bbox"]))
+    rng = __import__("random").Random(0)
+    n = Counter()
+    for cat, anns in per_cat.items():
+        if cat in TACO_CAPS and len(anns) > TACO_CAPS[cat]:
+            anns = rng.sample(anns, TACO_CAPS[cat])
+        for stem, W, aid, (x, y, w, h) in anns:
+            split = split_of[stem]
+            with Image.open(yolo / split / f"{stem}.jpg") as img:
+                s = img.width / W
+                # a few TACO boxes spill past the image edge: clip before size check
+                x0, y0 = max(0, x * s), max(0, y * s)
+                x1, y1 = min(img.width, (x + w) * s), min(img.height, (y + h) * s)
+                w, h = x1 - x0, y1 - y0
+                if min(w, h) < TACO_MIN_SIDE:
+                    continue
+                px, py = w * TACO_PAD, h * TACO_PAD
+                crop = img.crop((max(0, x0 - px), max(0, y0 - py),
+                                 min(img.width, x1 + px), min(img.height, y1 + py)))
+                out = dest / split / TACO_MAP[cat]
+                out.mkdir(parents=True, exist_ok=True)
+                crop.convert("RGB").save(out / f"{stem}_{aid}.jpg", "JPEG", quality=92)
+                n[split] += 1
+    print(f"taco crops: {dict(n)}")
+
 
 def fetch(key, src):
     if "kaggle" in src:
         return Path(kagglehub.dataset_download(src["kaggle"])) / src["subdir"]
+    if src.get("crops"):
+        dest = RAW / "taco_crops"
+        if not dest.exists():
+            tmp = dest.with_name(dest.name + ".partial")
+            shutil.rmtree(tmp, ignore_errors=True)
+            build_taco_crops(tmp)
+            tmp.rename(dest)  # only a finished build is reused next time
+        return dest
     dest = RAW / key
     if not (dest / src["subdir"]).exists():
         dest.mkdir(parents=True, exist_ok=True)
@@ -189,7 +284,7 @@ def main():
         per_class = defaultdict(list)
         for folder, cls in src["classes"].items():
             files = sorted(p for p in (base / folder).rglob("*") if p.suffix.lower() in IMG_EXT)
-            assert files, f"no images in {base / folder}"
+            assert files or src.get("crops"), f"no images in {base / folder}"
             per_class[cls] += files
         for cls, files in per_class.items():
             if args.cap and len(files) > args.cap:

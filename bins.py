@@ -1,9 +1,10 @@
 # Maps the model's fine-grained classes to 3 disposal bins (Seattle rules).
 # Changing a class's bin needs no retraining; adding a class does.
 BIN_OF = {
-    "plastic_bag": "trash",  # Seattle: plastic bags go in garbage
+    "plastic_bag": "trash",  # Seattle: plastic bags, film and wrappers go in garbage
     "styrofoam": "trash",
     "biological": "compost",
+    "tissue": "compost",  # Seattle: napkins, tissues, paper towels -> compost
     "cardboard": "recycling",
     "glass": "recycling",
     "metal": "recycling",

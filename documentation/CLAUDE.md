@@ -48,7 +48,7 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
   - `make_transforms(size)` returns `(train_tf, eval_tf)`.
   - `build_model(n, pretrained)` creates EfficientNetV2-S with an n-way classification head.
   - `bin_matrix(classes)` builds the 0/1 `(num_classes, len(BINS))` matrix, so `probs @ M` gives bin probabilities.
-  - `split_indices` makes a stratified 80/10/10 split with a fixed seed (0), so the test set never changes between runs. Keep it deterministic.
+  - `split_indices` makes a stratified 80/10/10 split with a fixed seed (0), so the test set never changes between runs. Keep it deterministic. Exception: sources in `FIXED_SPLIT_SOURCES` (TACO crops, named `taco__<split>_…`) keep the split of the photo they were cut from, so the detector's test photos stay unseen by the classifier too. Pass `paths=` to get this.
   - Classes are balanced with a `WeightedRandomSampler`, because biological is the *only* compost class.
   - `--extra` images are remapped onto the base dataset's class indices by folder name. They are added to training only and never to val or test.
   - Checkpoint selection uses **validation 3-bin accuracy**, not 10-class accuracy.
@@ -72,4 +72,5 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
 - Train and inference must share preprocessing and model construction. Always go through `make_transforms`, `build_model` and `bin_matrix` instead of duplicating them, and take the image size from the checkpoint rather than hardcoding it.
 - The class order comes from `ImageFolder` (alphabetical folder names) and is stored in the checkpoint. Don't hardcode class indices.
 - Importing `train.py` must stay cheap: training only runs under `main()`, so keep heavy work out of module scope there.
-- `checkpoints/`, `train.log`, `__pycache__/` and the dataset are generated artifacts. Don't commit them.
+- `train.log`, `__pycache__/`, `runs/` and the dataset are generated artifacts. Don't commit them.
+- Checkpoints that others need (`best.pt`, `detector.pt`, `best_taco.pt`) are committed through Git LFS (`.gitattributes`: `checkpoints/*.pt`). `checkpoints/` is still in `.gitignore`, so add them with `git add -f`; leave scratch checkpoints uncommitted.

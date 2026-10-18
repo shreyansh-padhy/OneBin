@@ -29,7 +29,7 @@ def main():
 
         ds = datasets.ImageFolder(DEFAULT_DATA, transform=make_transforms(ckpt["size"])[1])
         sources = [source_of(p) for p, _ in ds.samples]
-        _, _, te = split_indices(list(zip(sources, ds.targets)))
+        _, _, te = split_indices(list(zip(sources, ds.targets)), paths=[p for p, _ in ds.samples])
         true_bin = torch.tensor([BINS.index(BIN_OF[c]) for c in ds.classes])
 
         ok, n = Counter(), Counter()

@@ -9,6 +9,15 @@ Sources used by One Bin: the dataset, the model and training methods, and the so
 
    This is the 10-class training data (battery, biological, cardboard, clothes, glass, metal, paper, plastic, shoes, trash). Our copy has 12,259 images, matching the paper.
 
+### Additional datasets (merged by `import_data.py` into `data/combined*/`)
+
+These are relabeled onto One Bin's classes with Seattle disposal rules; per-source licenses are also written to `data/combined*/SOURCES.md`.
+
+- **King, A.** *Recyclable and Household Waste Classification.* Kaggle. https://www.kaggle.com/datasets/alistairking/recyclable-and-household-waste-classification — 30 item classes (cans, plastic bags, food waste, styrofoam, …); file prefix `hw__`.
+- **Single, S., Iranmanesh, S., & Raad, R.** (2023). *RealWaste: A Novel Real-Life Data Set for Landfill Waste Classification Using Deep Learning.* Information, 14(12), 633. https://doi.org/10.3390/info14120633. Data: UCI Machine Learning Repository, https://archive.ics.uci.edu/dataset/908/realwaste. **License: CC BY-NC-SA 4.0 (non-commercial)** — rebuild with `--skip rw` for commercial use. File prefix `rw__`.
+- **Nnamoko, N., Barrowclough, J., & Procter, J.** (2022). *Solid Waste Image Classification Using Deep Convolutional Neural Network.* Infrastructures, 7(4), 47. https://doi.org/10.3390/infrastructures7040047. Dataset: *Waste Classification Dataset*, Mendeley Data, https://doi.org/10.17632/n3gtgm9jxj.3 (CC BY 4.0), a cleaned version of **Sekar, S.** *Waste Classification Data*, Kaggle, https://www.kaggle.com/datasets/techsash/waste-classification-data. Only the organic class is used; file prefix `eh__`.
+- **TACO** (reference 13 below) item crops for the classifier: each annotated item is cut out of its photo and mapped to a One Bin class (`TACO_MAP` in `import_data.py`); file prefix `taco__`, and crops keep their photo's train/val/test split.
+
 ## Model
 
 3. **Tan, M., & Le, Q. V.** (2021). *EfficientNetV2: Smaller Models and Faster Training.* Proceedings of the 38th International Conference on Machine Learning (ICML), PMLR 139, 10096–10106. https://arxiv.org/abs/2104.00298
@@ -50,7 +59,7 @@ Sources used by One Bin: the dataset, the model and training methods, and the so
 
 13. **Proença, P. F., & Simões, P.** (2020). *TACO: Trash Annotations in Context for Litter Detection.* arXiv:2003.06975. https://arxiv.org/abs/2003.06975. Dataset: http://tacodataset.org. License: CC BY 4.0.
 
-    This is the training data for the item detector (`prepare_taco.py` turns it into a single-class "item" YOLO dataset).
+    This is the training data for the item detector (`prepare_taco.py` turns it into a single-class "item" YOLO dataset), and the source of the classifier's real-world item crops (see Additional datasets).
 14. **Ultralytics.** *Ultralytics YOLO* (YOLO26-s, starting from COCO-pretrained `yolo26s.pt`). https://github.com/ultralytics/ultralytics. License: AGPL-3.0.
 
     This is the detector architecture and training framework (`train_detector.py`, `sorter.py`).
