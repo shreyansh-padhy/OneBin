@@ -127,6 +127,43 @@ For automated physical sorting, connect an Arduino Uno / ESP32 running [`firmwar
 
 ---
 
+## Automated 3-Way Integration & Health Check
+
+Validate the end-to-end integration between GitHub, Vercel, and Supabase at any time:
+
+```bash
+npm run verify
+```
+
+This automated test suite verifies:
+1. **GitHub $\rightarrow$ Vercel**: Production endpoint HTTP 200, WebAssembly cross-origin headers (`COOP: same-origin`, `COEP: require-corp`), and ONNX weight CDN cache.
+2. **Vercel $\rightarrow$ Supabase Configuration**: Presence and JWT validity of `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. **Live Supabase Operations**: Row insertion, real-time readback via RLS, `get_bin_analytics()` RPC execution, and `waste-dataset` storage bucket upload/readback.
+
+---
+
+## Active Learning Training Pipeline
+
+OneBin continuously improves by ingesting user-consented, real-world edge waste scans into fine-tuning sets:
+
+1. **Pull and organize edge dataset**:
+   ```bash
+   python scripts/sync_training_data.py
+   ```
+   This pulls verified images and metadata from Supabase and organizes them into the 12 fine-grained classes under `real/<class>/<id>.jpg`.
+
+2. **Fine-tune the model with real-world edge data**:
+   ```bash
+   python train.py --extra real --init checkpoints/best.pt --epochs 4 --lr 1e-4
+   ```
+
+3. **Re-export to ONNX**:
+   ```bash
+   python export_onnx.py --checkpoint checkpoints/best.pt --output public/models/onebin.onnx
+   ```
+
+---
+
 ## Team & Attribution
 - Project by University of Washington CSE students.
 - Special thanks to Seattle Public Utilities for open waste diversion guidelines.

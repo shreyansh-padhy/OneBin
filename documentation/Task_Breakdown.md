@@ -150,7 +150,7 @@
   - `<Analytics />` and `<SpeedInsights />` mounted at root layout.
 
 ### Task 3.4: Automated 3-Way Integration & Connectivity Health Check
-- **Status**: `[READY FOR BUILDER]`
+- **Status**: `[COMPLETED]` (Delivered via `scripts/verify_3way_connection.mjs` & `npm run verify`)
 - **Target Files**: `scripts/verify_3way_connection.mjs`, `package.json`
 - **Objective**: Build an automated integration verification script that programmatically tests all three connected services:
   1. **GitHub $\rightarrow$ Vercel**: Verifies latest commit SHA is deployed and returns HTTP 200 with COOP/COEP headers.
@@ -161,7 +161,7 @@
   - Zero sensitive service keys leaked (runs strictly with public `anon` credentials).
 
 ### Task 3.5: Active Learning Training Ingestion Pipeline (`scripts/sync_training_data.py`)
-- **Status**: `[READY FOR BUILDER]`
+- **Status**: `[COMPLETED]` (Delivered via `scripts/sync_training_data.py`)
 - **Target Files**: `scripts/sync_training_data.py`, `README.md`
 - **Objective**: Build a Python CLI utility that connects to Supabase, pulls all user-consented and ground-truth verified waste photos and labels from the `waste-dataset` storage bucket and `scans` table, and organizes them into `real/{fine_class}/{id}.jpg` for seamless model fine-tuning with `train.py`.
 - **Architectural Constraints & Acceptance Criteria**:

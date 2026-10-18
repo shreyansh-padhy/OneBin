@@ -8,7 +8,8 @@
     "prebuild": "node scripts/copy-ort-wasm.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify": "node scripts/verify_3way_connection.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",

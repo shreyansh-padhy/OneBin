@@ -28,8 +28,8 @@
 | Agent | Status | Current Activity / Focus | Last Updated |
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Successfully connected & verified GitHub <-> Vercel <-> Supabase 3-way integration | 2026-10-17 |
-| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Built and verified Live Stage Telemetry Scoreboard (/dashboard), Municipality Rules Engine, and UW Dataset Opt-In (Vercel Blob) | 2026-10-17 |
-| **Auditor Agent (`cf506aec`)** | `[ACTIVE]` | Merging origin/model/taco-detector into main and verifying TACO multi-object detector integration and ONNX pipeline | 2026-10-17 |
+| **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Completed Task 3.4 (verify_3way_connection.mjs automated health check) and Task 3.5 (sync_training_data.py active learning pipeline) | 2026-10-17 |
+| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #6: verified merge of origin/model/taco-detector into main (TACO YOLO detector checkpoints/detector.pt, two-stage sorter.py, Gradio app.py, prepare_taco.py, train_detector.py); verified Next.js build passes | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | In-browser classifier built on branch `feat/in-browser-classifier`; merging into main | 2026-10-17 |
 
 ---
@@ -39,20 +39,40 @@
 
 | Index | Timestamp | Agent | Action / Change | Target Files / Scope | Status / Audit Flag |
 |---|---|---|---|---|---|
-| 01 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 3 tasks (Task 3.4 3-way integration health check, Task 3.5 ML training ingestion sync); verified GitHub <-> Vercel <-> Supabase live pipeline | `documentation/Task_Breakdown.md`, Vercel MCP, Supabase | Verified & Ready for Builder |
-| 02 | 2026-10-17 | Claude Agent | Pushed multi-object TACO item detector: `checkpoints/detector.pt` (YOLO26-s, 1 class, 94 epochs) via Git LFS, two-stage `sorter.py`, multi-item Gradio `app.py` | `checkpoints/detector.pt`, `sorter.py`, `train_detector.py`, `prepare_taco.py`, `app.py` | Pushed to branch `model/taco-detector` |
-| 03 | 2026-10-17 | Auditor (`cf506aec`) | Completely removed all sound, speech synthesis, volume icons, and audio controls from VerdictCard.tsx; updated Task_Breakdown.md, Business_and_Resources.md, and README.md to enforce 100% silent optical sensing | `components/VerdictCard.tsx`, `documentation/`, `README.md` | Complete & Verified |
-| 04 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 3 atomic tasks (Task 3.1 Supabase Realtime, 3.2 SQL Schema & RPC, 3.3 Vercel Analytics) | `documentation/Task_Breakdown.md` | Ready for Builder |
-| 05 | 2026-10-17 | Auditor (`cf506aec`) | Aligned all project documentation (Business_and_Resources.md, README.md, Task_Breakdown.md) with municipal facility sorting paradigm (consumers use OneBin; sorting occurs at centralized MRFs), confirmed zero microphone usage (100% optical camera pipeline), and noted model training progression | `documentation/`, `README.md` | Complete & Verified |
-| 06 | 2026-10-17 | Idea Agent (`37c49000`) | Integrated @supabase/supabase-js client SDK for Storage & DB sync; added 1-tap material selection chips (metal/paper/plastic/etc.) & material prompt in DatasetFeedbackWidget; fixed publicUrl scope | `lib/supabase.ts`, `components/DatasetFeedbackWidget.tsx`, `package.json` | Verified (build 6.1s passed) |
-| 07 | 2026-10-17 | Idea Agent (`37c49000`) | Built DatasetFeedbackWidget with explicit user consent, human-in-the-loop ground truth verification, Supabase Storage (JPEG) & DB logging; commented out scoreboard link on main page | `components/DatasetFeedbackWidget.tsx`, `lib/supabase.ts`, `components/VerdictCard.tsx`, `app/page.tsx` | Verified (build 3.4s) |
-| 08 | 2026-10-17 | Builder (`6b28e153`) | Built Live Stage Telemetry Scoreboard (/dashboard), dynamic Municipality Policy Engine (lib/rules.ts, app/api/rules/route.ts, MunicipalitySelector.tsx), and UW Waste Dataset opt-in (lib/blob.ts, app/api/contribute/route.ts) | `app/dashboard/`, `lib/rules.ts`, `app/api/rules/`, `components/MunicipalitySelector.tsx`, `lib/blob.ts`, `app/api/contribute/`, `lib/supabase.ts`, `components/Sorter.tsx`, `app/page.tsx`, `README.md` | Verified (build & lint passed) |
-| 09 | 2026-10-17 | Builder (`6b28e153`) | Built interactive physical IoT Smart Bin actuation panel (SerialActuatorModal.tsx), open/close servo commands, and Arduino/ESP32 firmware (firmware/arduino_bins.ino) | `components/SerialActuatorModal.tsx`, `firmware/arduino_bins.ino`, `components/Sorter.tsx`, `lib/serial.ts`, `README.md` | Verified (build & lint passed) |
-| 10 | 2026-10-17 | Builder (`6b28e153`) | Implemented P2-P5 backlog: continuous Auto-Scan mode (CameraCapture.tsx), Impact telemetry & StatsModal (lib/supabase.ts, StatsModal.tsx), and Web Serial IoT servo actuation (lib/serial.ts) | `components/`, `lib/` | Verified (build & lint passed) |
+| 01 | 2026-10-17 | Builder (`6b28e153`) | Implemented Task 3.4 (scripts/verify_3way_connection.mjs & npm run verify) and Task 3.5 (scripts/sync_training_data.py active learning ingestion pipeline into real/<class>/<id>.jpg); verified all 10 health checks passed | `scripts/verify_3way_connection.mjs`, `scripts/sync_training_data.py`, `package.json`, `README.md` | Verified (`npm run verify` passed, build passed) |
+| 02 | 2026-10-17 | Auditor (`cf506aec`) | Merged origin/model/taco-detector into main: integrated TACO YOLO detector (`checkpoints/detector.pt`, 20.3MB Git LFS, mAP50 0.604), two-stage multi-item `sorter.py`, Gradio `app.py`, `prepare_taco.py`, `train_detector.py`; verified Next.js build passes | `checkpoints/detector.pt`, `sorter.py`, `app.py`, `prepare_taco.py`, `train_detector.py`, `documentation/REFERENCES.md` | Merged & Verified (Build Passed) |
+| 03 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 3 tasks (Task 3.4 3-way integration health check, Task 3.5 ML training ingestion sync); verified GitHub <-> Vercel <-> Supabase live pipeline | `documentation/Task_Breakdown.md`, Vercel MCP, Supabase | Verified & Ready for Builder |
+| 04 | 2026-10-17 | Claude Agent | Pushed multi-object TACO item detector: `checkpoints/detector.pt` (YOLO26-s, 1 class, 94 epochs) via Git LFS, two-stage `sorter.py`, multi-item Gradio `app.py` | `checkpoints/detector.pt`, `sorter.py`, `train_detector.py`, `prepare_taco.py`, `app.py` | Pushed to branch `model/taco-detector` |
+| 05 | 2026-10-17 | Auditor (`cf506aec`) | Completely removed all sound, speech synthesis, volume icons, and audio controls from VerdictCard.tsx; updated Task_Breakdown.md, Business_and_Resources.md, and README.md to enforce 100% silent optical sensing | `components/VerdictCard.tsx`, `documentation/`, `README.md` | Complete & Verified |
+| 06 | 2026-10-17 | Idea Agent (`37c49000`) | Authored Phase 3 atomic tasks (Task 3.1 Supabase Realtime, 3.2 SQL Schema & RPC, 3.3 Vercel Analytics) | `documentation/Task_Breakdown.md` | Ready for Builder |
+| 07 | 2026-10-17 | Auditor (`cf506aec`) | Aligned all project documentation (Business_and_Resources.md, README.md, Task_Breakdown.md) with municipal facility sorting paradigm (consumers use OneBin; sorting occurs at centralized MRFs), confirmed zero microphone usage (100% optical camera pipeline), and noted model training progression | `documentation/`, `README.md` | Complete & Verified |
+| 08 | 2026-10-17 | Idea Agent (`37c49000`) | Integrated @supabase/supabase-js client SDK for Storage & DB sync; added 1-tap material selection chips (metal/paper/plastic/etc.) & material prompt in DatasetFeedbackWidget; fixed publicUrl scope | `lib/supabase.ts`, `components/DatasetFeedbackWidget.tsx`, `package.json` | Verified (build 6.1s passed) |
+| 09 | 2026-10-17 | Idea Agent (`37c49000`) | Built DatasetFeedbackWidget with explicit user consent, human-in-the-loop ground truth verification, Supabase Storage (JPEG) & DB logging; commented out scoreboard link on main page | `components/DatasetFeedbackWidget.tsx`, `lib/supabase.ts`, `components/VerdictCard.tsx`, `app/page.tsx` | Verified (build 3.4s) |
+| 10 | 2026-10-17 | Builder (`6b28e153`) | Built Live Stage Telemetry Scoreboard (/dashboard), dynamic Municipality Policy Engine (lib/rules.ts, app/api/rules/route.ts, MunicipalitySelector.tsx), and UW Waste Dataset opt-in (lib/blob.ts, app/api/contribute/route.ts) | `app/dashboard/`, `lib/rules.ts`, `app/api/rules/`, `components/MunicipalitySelector.tsx`, `lib/blob.ts`, `app/api/contribute/`, `lib/supabase.ts`, `components/Sorter.tsx`, `app/page.tsx`, `README.md` | Verified (build & lint passed) |
 
 ---
 
 ## 5. Auditor Verification Protocol & Audit Findings
+
+### Audit Report #6: TACO Multi-Object Detector & Two-Stage Sorter Verification (Auditor `cf506aec-8778-4065-af52-8112e7feeff2`)
+- **Directives Evaluated**: User request to merge the TACO detector branch (`origin/model/taco-detector`) into `main` and evaluate ONNX edge integration.
+- **Components Merged & Inspected**:
+  1. *`checkpoints/detector.pt`*: YOLO26-s trained on TACO (Trash Annotations in Context) single "item" class, 94 epochs (test mAP50 0.604, mAP50-95 0.446), tracked via Git LFS (20.3MB).
+  2. *`sorter.py`*: Two-stage multi-item sorting engine (detector locates bounding boxes $\rightarrow$ crops each box with 10% context padding $\rightarrow$ classifies each crop via `checkpoints/best.pt`). If no items are detected, cleanly falls back to single-item classification on the whole image.
+  3. *`app.py`*: Gradio UI updated to render multi-object detection boxes with bin colors and probability badges.
+  4. *`prepare_taco.py` & `train_detector.py`*: Training data ingestion and fine-tuning pipelines.
+  5. *`documentation/REFERENCES.md`*: Added citations for TACO (CC BY 4.0) and Ultralytics YOLO (AGPL-3.0).
+- **ONNX Web Pipeline Assessment**:
+  - Web application currently runs single-item classification directly inside browser WebAssembly via `public/models/onebin.onnx` (FP16, 41.7MB) generated by `export_onnx.py`.
+  - Next step for the web interface: export `checkpoints/detector.pt` to ONNX (`yolo.export(format='onnx')`) to enable client-side multi-item bounding box detection in Next.js without requiring a Python server.
+- **Verification Execution**:
+  - Verified Git LFS integrity for both `checkpoints/best.pt` (81.6MB) and `checkpoints/detector.pt` (20.3MB).
+  - Executed `npm run build`: Compiled successfully in 46s with 0 lint errors, 0 type errors, and clean static page optimization.
+- **Verdict**:
+  - **Branch `model/taco-detector` successfully merged into `main`.**
+  - **All assets verified.**
+
+---
 
 ### Audit Report #4: Zero-API-Key Architecture Verification & Repo Decoupling (Auditor `cf506aec-8778-4065-af52-8112e7feeff2`)
 - **Directives Evaluated**: User explicit decision to drop external Gemini API keys and operate exclusively via the in-browser ONNX WebAssembly model.
