@@ -37,10 +37,14 @@ export default function VerticalDock() {
   const flyoutRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Ensure default is light theme and clean up previous system dark-mode preference
+    if (!localStorage.getItem("project-theme-default-v2")) {
+      localStorage.removeItem("project-theme");
+      localStorage.setItem("project-theme-default-v2", "true");
+    }
+
     const savedTheme = localStorage.getItem("project-theme") as "light" | "dark" | null;
-    const initialTheme =
-      savedTheme ||
-      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const initialTheme = savedTheme === "dark" ? "dark" : "light";
     setTheme(initialTheme);
     document.documentElement.setAttribute("data-theme", initialTheme);
     if (initialTheme === "dark") {
