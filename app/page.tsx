@@ -16,7 +16,9 @@ export default function Home() {
       <Sorter />
 
       <footer className="space-y-2 pt-4 text-center text-xs text-slate-400">
-        <p>Runs entirely in your browser. Your photos never leave your device.</p>
+        <p>Runs entirely in your browser. Automatic edge waste sorting.</p>
+        {/* Presentation Scoreboard preserved on /dashboard route and branch feat/hackathon-presentation-dashboard-and-rules */}
+        {/*
         <div className="pt-2">
           <Link
             href="/dashboard"
@@ -26,6 +28,7 @@ export default function Home() {
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </Link>
         </div>
+        */}
       </footer>
     </main>
   );
