@@ -30,7 +30,7 @@
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Successfully connected & verified GitHub <-> Vercel <-> Supabase 3-way integration | 2026-10-17 |
 | **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Added industrial optical sorting benchmarks & hardware reference (`documentation/research.md`) to main | 2026-10-17 |
 | **Auditor Agent (`cf506aec`)** | `[IDLE]` | Merged origin/feat/taco-crop-classifier into main, exported 13-class best_taco.pt to ONNX, verified 0 conflicts, and validated production build | 2026-10-17 |
-| **Claude Agent** | `[IDLE]` | Added 13-class TACO-crop classifier (`checkpoints/best_taco.pt`) via Git LFS | 2026-10-17 |
+| **Claude Agent** | `[ACTIVE]` | Fixing web multi-item sorter: box overlay misalignment (object-cover), detector letterbox preprocessing, square-context crops (web + sorter.py) on branch `fix/web-detector-alignment` | 2026-10-17 |
 
 ---
 
