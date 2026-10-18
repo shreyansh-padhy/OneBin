@@ -97,7 +97,7 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
             <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
             <span>Gemini Second Opinion</span>
             <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-800">
-              gemini-3.8-flash
+              gemini-3.7-flash
             </span>
           </div>
           <span className="text-[11px] font-semibold text-slate-500">
