@@ -7,9 +7,9 @@ export default function Home() {
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
       <div className="pointer-events-none absolute -top-20 right-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
 
-      <main className="relative mx-auto min-h-screen w-full max-w-md space-y-6 px-4 py-8 sm:px-6">
-        <header className="space-y-2 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 shadow-sm backdrop-blur-md">
+      <main className="relative mx-auto min-h-screen w-full max-w-xl space-y-7 px-4 py-10 sm:px-6">
+        <header className="space-y-3 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3.5 py-1.5 shadow-sm backdrop-blur-md">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
