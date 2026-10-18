@@ -57,6 +57,11 @@ export default function Sorter() {
       setSelectedIdx(0);
       setImageDims({ width: frame.width, height: frame.height });
 
+      // In auto-scan mode, capture the active item's crop or frame snapshot so VerdictCard has visual imagery
+      if (isAuto) {
+        setPhoto(items[0]?.cropDataUrl || frame.toDataURL("image/jpeg", 0.75));
+      }
+
       const activeVerdict = items[0]?.verdict ?? null;
       setVerdict(activeVerdict);
 
@@ -133,7 +138,20 @@ export default function Sorter() {
       )}
 
       {cameraOpen ? (
-        <CameraCapture onCapture={classify} onClose={() => setCameraOpen(false)} />
+        <CameraCapture
+          onCapture={classify}
+          onClose={() => setCameraOpen(false)}
+          autoScanItems={sortedItems}
+          selectedIdx={selectedIdx}
+          onSelect={(idx) => {
+            setSelectedIdx(idx);
+            setVerdict(sortedItems[idx]?.verdict ?? null);
+            if (sortedItems[idx]?.cropDataUrl) {
+              setPhoto(sortedItems[idx].cropDataUrl);
+            }
+          }}
+          busy={busy}
+        />
       ) : (
         <div
           onDragOver={(e) => {
@@ -270,11 +288,24 @@ export default function Sorter() {
                   onClick={() => {
                     setSelectedIdx(idx);
                     setVerdict(it.verdict);
+                    if (it.cropDataUrl) {
+                      setPhoto(it.cropDataUrl);
+                    }
                   }}
-                  className={`flex min-h-[38px] items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${binStyle}`}
+                  className={`flex min-h-[44px] items-center gap-2 rounded-xl border p-1.5 pr-3 text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${binStyle}`}
                 >
-                  <span>#{idx + 1} {it.verdict.bin.toUpperCase()}</span>
-                  <span className="text-[10px] opacity-80">({it.verdict.item})</span>
+                  {it.cropDataUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element -- local canvas data URL */
+                    <img
+                      src={it.cropDataUrl}
+                      alt={it.verdict.item}
+                      className="h-8 w-8 rounded-lg object-cover border border-black/10 bg-white shrink-0"
+                    />
+                  ) : null}
+                  <div className="text-left">
+                    <p className="leading-tight">#{idx + 1} {it.verdict.bin.toUpperCase()}</p>
+                    <p className="text-[10px] opacity-80 font-normal leading-tight">{it.verdict.item}</p>
+                  </div>
                 </button>
               );
             })}

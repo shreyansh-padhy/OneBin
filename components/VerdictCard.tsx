@@ -91,11 +91,19 @@ export default function VerdictCard({
           </p>
         </div>
 
-        {iotFired && (
-          <span className="flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-md animate-pulse">
-            <Cpu className="h-4 w-4" /> Lid Diverter Opened
-          </span>
-        )}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {iotFired && (
+            <span className="flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-md animate-pulse">
+              <Cpu className="h-4 w-4" /> Lid Diverter Opened
+            </span>
+          )}
+          {photo && (
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-white/90 shadow-sm bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element -- local canvas data URL */}
+              <img src={photo} alt="Item crop" className="h-full w-full object-cover" />
+            </div>
+          )}
+        </div>
       </div>
 
       {verdict.warnings.map((w) => (
