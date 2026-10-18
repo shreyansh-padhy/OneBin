@@ -13,7 +13,12 @@ Needs: pip install onnx onnxruntime onnxscript onnxconverter-common
 """
 import argparse
 import json
+import sys
 from pathlib import Path
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import numpy as np
 import onnx
