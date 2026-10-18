@@ -1,20 +1,34 @@
 "use client";
 
-import { Camera, RefreshCw, X, Zap, ZapOff } from "lucide-react";
+import { Camera, Pause, RefreshCw, X, Zap, ZapOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
+import type { SortedItem } from "@/lib/sorter";
 
 type Props = {
   onCapture: (frame: HTMLCanvasElement, isAuto?: boolean) => void;
   onClose: () => void;
+  autoScanItems?: SortedItem[];
+  selectedIdx?: number;
+  onSelect?: (index: number) => void;
+  busy?: boolean;
 };
 
-/** Live camera preview with manual shutter and continuous auto-scan mode. */
-export default function CameraCapture({ onCapture, onClose }: Props) {
+/** Live camera preview with manual shutter, continuous auto-scan mode, and real-time AR bounding boxes. */
+export default function CameraCapture({
+  onCapture,
+  onClose,
+  autoScanItems,
+  selectedIdx = 0,
+  onSelect,
+  busy,
+}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [autoScan, setAutoScan] = useState(false);
   const [scanningPulse, setScanningPulse] = useState(false);
+  const [videoDims, setVideoDims] = useState<{ width: number; height: number } | null>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -76,8 +90,13 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
     return () => clearInterval(interval);
   }, [ready, autoScan, grabFrame, onCapture]);
 
+  const hasBoxes = Boolean(autoScan && autoScanItems && autoScanItems.length > 0 && autoScanItems[0].box);
+
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-900 shadow-inner">
+    <div
+      className="relative aspect-square w-full overflow-hidden rounded-2xl bg-slate-900 shadow-inner"
+      style={videoDims ? { aspectRatio: `${videoDims.width} / ${videoDims.height}` } : undefined}
+    >
       {error ? (
         <p className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-200">{error}</p>
       ) : (
@@ -87,29 +106,54 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
             autoPlay
             playsInline
             muted
-            onLoadedData={() => setReady(true)}
-            className="h-full w-full object-cover"
+            onLoadedData={() => {
+              setReady(true);
+              if (videoRef.current) {
+                setVideoDims({
+                  width: videoRef.current.videoWidth,
+                  height: videoRef.current.videoHeight,
+                });
+              }
+            }}
+            className="h-full w-full object-contain"
           />
 
-          {/* Target Reticle (model sees center square) */}
-          <div
-            className={`pointer-events-none absolute inset-6 rounded-xl border-2 transition-all duration-300 ${
-              autoScan
-                ? scanningPulse
-                  ? "border-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(52,211,153,0.4)]"
-                  : "border-emerald-500/70"
-                : "border-dashed border-white/60"
-            }`}
-          >
-            {autoScan && (
-              <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 backdrop-blur-sm">
-                <RefreshCw className="h-3 w-3 animate-spin" /> Live Auto-Scanning
-              </div>
-            )}
-          </div>
+          {/* Live AR Bounding Box Overlay on Camera Stream */}
+          {hasBoxes && videoDims && autoScanItems && (
+            <div className="absolute inset-0 z-10">
+              <BoundingBoxOverlay
+                items={autoScanItems}
+                imageWidth={videoDims.width}
+                imageHeight={videoDims.height}
+                selectedIdx={selectedIdx}
+                onSelect={(idx) => {
+                  onSelect?.(idx);
+                }}
+              />
+            </div>
+          )}
+
+          {/* Target Reticle (shows search reticle when no boxes are active) */}
+          {!hasBoxes && (
+            <div
+              className={`pointer-events-none absolute inset-6 rounded-xl border-2 transition-all duration-300 ${
+                autoScan
+                  ? scanningPulse
+                    ? "border-emerald-400 bg-emerald-500/10 shadow-[0_0_20px_rgba(52,211,153,0.4)]"
+                    : "border-emerald-500/70"
+                  : "border-dashed border-white/60"
+              }`}
+            >
+              {autoScan && (
+                <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 backdrop-blur-sm">
+                  <RefreshCw className="h-3 w-3 animate-spin" /> Live Auto-Scanning
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Controls Bar */}
-          <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
             <button
               type="button"
               onClick={() => setAutoScan(!autoScan)}
@@ -125,18 +169,31 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
             </button>
           </div>
 
-          {/* Shutter Button (manual snapshot) */}
-          {!autoScan && (
+          {/* Live item count badge during Auto-Scan */}
+          {autoScan && hasBoxes && (
+            <div className="absolute top-3.5 right-16 z-20 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-sm border border-white/10">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{autoScanItems?.length} items tracked</span>
+            </div>
+          )}
+
+          {/* Shutter / Freeze Button: manual snap or freeze auto-scan */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1">
             <button
               type="button"
               onClick={captureManual}
               disabled={!ready}
-              aria-label="Take photo"
-              className="absolute bottom-4 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-white/30 text-white backdrop-blur transition hover:bg-white/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-40"
+              aria-label={autoScan ? "Freeze auto-scan detection" : "Take photo"}
+              className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white/30 text-white backdrop-blur transition hover:bg-white/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-40 shadow-lg active:scale-95"
             >
-              <Camera className="h-7 w-7" />
+              {autoScan ? <Pause className="h-7 w-7" /> : <Camera className="h-7 w-7" />}
             </button>
-          )}
+            {autoScan && (
+              <span className="text-[10px] font-semibold text-white/90 drop-shadow-md">
+                Freeze &amp; Crop
+              </span>
+            )}
+          </div>
         </>
       )}
 
@@ -145,7 +202,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
         type="button"
         onClick={onClose}
         aria-label="Close camera"
-        className="absolute right-3 top-3 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+        className="absolute right-3 top-3 z-20 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
       >
         <X className="h-5 w-5" />
       </button>

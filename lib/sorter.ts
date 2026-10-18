@@ -17,6 +17,7 @@ export type BoundingBox = {
 export type SortedItem = {
   box: BoundingBox | null;
   verdict: Verdict;
+  cropDataUrl?: string;
 };
 
 export type DetectorMeta = {
@@ -99,7 +100,7 @@ export class TwoStageSorter {
       if (ctx) {
         ctx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, cropCanvas.width, cropCanvas.height);
         const verdict = await this.classifier.classify(cropCanvas, cropCanvas.width, cropCanvas.height);
-        sorted.push({ box, verdict });
+        sorted.push({ box, verdict, cropDataUrl: cropCanvas.toDataURL("image/jpeg", 0.8) });
       }
     }
 
