@@ -52,14 +52,16 @@ export default function BoundingBoxOverlay({
         const isSelected = idx === selectedIdx;
 
         return (
-          <div
+          <button
             key={idx}
+            type="button"
+            aria-label={`Select item ${idx + 1}: ${it.verdict.item}, categorized as ${it.verdict.bin}`}
             style={{ left, top, width, height }}
             onClick={(e) => {
               e.stopPropagation();
               onSelect(idx);
             }}
-            className={`pointer-events-auto absolute cursor-pointer rounded-lg border-2 transition-all ${
+            className={`pointer-events-auto absolute cursor-pointer rounded-lg border-2 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
               colors.border
             } ${colors.bg} ${
               isSelected ? "ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-lg scale-[1.01]" : "opacity-85 hover:opacity-100"
@@ -76,7 +78,7 @@ export default function BoundingBoxOverlay({
                 {it.verdict.item}
               </span>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>

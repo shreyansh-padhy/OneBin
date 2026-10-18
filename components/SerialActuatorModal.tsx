@@ -71,18 +71,23 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="serial-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in"
+    >
       <div className="relative max-h-[90vh] w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-indigo-600" />
-            <h2 className="font-bold text-slate-900 text-lg">Smart Bin IoT Actuator</h2>
+            <h2 id="serial-modal-title" className="font-bold text-slate-900 text-lg">Smart Bin IoT Actuator</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
             aria-label="Close modal"
           >
             <X className="h-5 w-5" />
@@ -107,7 +112,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
                 type="button"
                 onClick={handleToggleConnect}
                 disabled={busy}
-                className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold shadow-sm transition-all ${
+                className={`flex min-h-[40px] items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${
                   connected
                     ? "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
                     : "bg-slate-900 text-white hover:bg-slate-800"
@@ -139,7 +144,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
                 type="button"
                 onClick={() => triggerLid("compost", "Compost")}
                 disabled={!connected}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50/70 p-3 text-emerald-900 shadow-sm hover:bg-emerald-100 disabled:opacity-40 transition-colors"
+                className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50/70 p-3 text-emerald-900 shadow-sm hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 disabled:opacity-40 transition-colors"
               >
                 <span className="text-lg">🟢</span>
                 <span className="text-xs font-bold">Compost</span>
@@ -150,7 +155,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
                 type="button"
                 onClick={() => triggerLid("recycling", "Recycling")}
                 disabled={!connected}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border border-blue-300 bg-blue-50/70 p-3 text-blue-900 shadow-sm hover:bg-blue-100 disabled:opacity-40 transition-colors"
+                className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-xl border border-blue-300 bg-blue-50/70 p-3 text-blue-900 shadow-sm hover:bg-blue-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-1 disabled:opacity-40 transition-colors"
               >
                 <span className="text-lg">🔵</span>
                 <span className="text-xs font-bold">Recycling</span>
@@ -161,7 +166,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
                 type="button"
                 onClick={() => triggerLid("trash", "Trash")}
                 disabled={!connected}
-                className="flex flex-col items-center justify-center gap-1 rounded-xl border border-slate-300 bg-slate-100 p-3 text-slate-900 shadow-sm hover:bg-slate-200 disabled:opacity-40 transition-colors"
+                className="flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-xl border border-slate-300 bg-slate-100 p-3 text-slate-900 shadow-sm hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 disabled:opacity-40 transition-colors"
               >
                 <span className="text-lg">⚫</span>
                 <span className="text-xs font-bold">Trash</span>
@@ -173,7 +178,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
               type="button"
               onClick={closeAll}
               disabled={!connected}
-              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-40"
+              className="w-full flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 disabled:opacity-40"
             >
               <RotateCcw className="h-3.5 w-3.5 text-slate-500" /> Close All Lids (&apos;X&apos;)
             </button>
@@ -208,7 +213,7 @@ export default function SerialActuatorModal({ onClose }: { onClose: () => void }
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+            className="min-h-[44px] rounded-xl bg-slate-900 px-5 py-2 font-semibold text-white hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
           >
             Done
           </button>

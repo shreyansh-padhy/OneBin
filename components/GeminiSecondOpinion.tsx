@@ -140,9 +140,9 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
       <button
         type="button"
         onClick={() => fetchSecondOpinion()}
-        className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-white hover:text-indigo-600 transition-colors shadow-2xs"
+        className="flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-colors hover:bg-white hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
       >
-        <Sparkles className="h-3 w-3 text-indigo-500" />
+        <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
         <span>Ask Gemini Second Opinion</span>
       </button>
     </div>

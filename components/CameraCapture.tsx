@@ -113,10 +113,11 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
             <button
               type="button"
               onClick={() => setAutoScan(!autoScan)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-md transition-all ${
+              aria-pressed={autoScan}
+              className={`flex min-h-[44px] items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold backdrop-blur-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                 autoScan
                   ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                  : "bg-black/50 text-white hover:bg-black/70"
+                  : "bg-black/60 text-white hover:bg-black/80"
               }`}
             >
               {autoScan ? <Zap className="h-3.5 w-3.5 fill-current" /> : <ZapOff className="h-3.5 w-3.5" />}
@@ -131,7 +132,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
               onClick={captureManual}
               disabled={!ready}
               aria-label="Take photo"
-              className="absolute bottom-4 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-white/30 text-white backdrop-blur transition hover:bg-white/50 disabled:opacity-40"
+              className="absolute bottom-4 left-1/2 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-white/30 text-white backdrop-blur transition hover:bg-white/50 focus:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-40"
             >
               <Camera className="h-7 w-7" />
             </button>
@@ -144,7 +145,7 @@ export default function CameraCapture({ onCapture, onClose }: Props) {
         type="button"
         onClick={onClose}
         aria-label="Close camera"
-        className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+        className="absolute right-3 top-3 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
       >
         <X className="h-5 w-5" />
       </button>
