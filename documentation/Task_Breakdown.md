@@ -126,3 +126,32 @@
 - **Status**: `[COMPLETED]`
 - **Target Files**: `lib/serial.ts`, `components/Sorter.tsx`, `components/VerdictCard.tsx`
 - **Delivered**: Browser Web Serial connection (`navigator.serial`) at 9600 baud sending physical lid actuation commands (`'C\n'` Compost, `'R\n'` Recycling, `'T\n'` Trash) to connected Arduino/ESP32 hardware.
+
+---
+
+## Phase 3: Production Cloud Telemetry & Active Learning Pipeline
+
+### Task 3.1: Supabase Realtime Telemetry WebSocket Subscription
+- **Status**: `[READY FOR BUILDER]`
+- **Target Files**: `lib/supabase.ts`, `app/dashboard/page.tsx`
+- **Objective**: Wire up `supabase.channel('realtime:scans')` to listen to live `INSERT` events on the `scans` table, allowing stage presentation dashboards to increment live waste counts and diversion metrics globally without page refreshes.
+- **Acceptance Criteria**:
+  - `subscribeToLiveScans` registers a Postgres changes channel when `supabase` client is initialized.
+  - Automatically unregisters channel on cleanup.
+  - Falls back to `BroadcastChannel` and `localStorage` when offline or unconfigured.
+
+### Task 3.2: Supabase Storage & Telemetry Database Schema Script
+- **Status**: `[READY FOR BUILDER]`
+- **Target Files**: `supabase/schema.sql`
+- **Objective**: Provide an automated, idempotent SQL migration script configuring the `scans` table, indexes on `created_at` and `bin`, `supabase_realtime` publication enablement, `waste-dataset` storage bucket definition with permissive insert policies, and a `get_bin_analytics()` RPC function computing diversion rates.
+- **Acceptance Criteria**:
+  - Idempotent SQL script executing cleanly in Supabase SQL Editor.
+  - Realtime publication added for table `scans`.
+
+### Task 3.3: Vercel Web Analytics & Speed Insights
+- **Status**: `[READY FOR BUILDER]`
+- **Target Files**: `app/layout.tsx`, `package.json`
+- **Objective**: Install `@vercel/analytics` and `@vercel/speed-insights` and embed them into `RootLayout` in `app/layout.tsx` for zero-configuration kiosk latency and user engagement metrics on Vercel.
+- **Acceptance Criteria**:
+  - `npm run build` succeeds without bundle bloat.
+  - `<Analytics />` and `<SpeedInsights />` mounted at root layout.
