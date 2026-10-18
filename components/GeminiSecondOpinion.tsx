@@ -1,106 +1,81 @@
 "use client";
 
 import { AlertTriangle, Sparkles } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Verdict } from "@/lib/classifier";
 import type { ClassificationResult } from "@/lib/types";
 
 interface GeminiSecondOpinionProps {
   verdict: Verdict;
   photo?: string | null;
+  /** Answer already fetched for this item (kept by the parent across item switches). */
+  cached?: ClassificationResult;
+  onResult?: (result: ClassificationResult) => void;
 }
 
-export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpinionProps) {
-  const [result, setResult] = useState<ClassificationResult | null>(null);
+/**
+ * Gemini second opinion for ONE detected item. The parent remounts this per item (React key),
+ * so all state here belongs to a single item and the auto-request fires at most once per item.
+ */
+export default function GeminiSecondOpinion({ verdict, photo, cached, onResult }: GeminiSecondOpinionProps) {
+  const [result, setResult] = useState<ClassificationResult | null>(cached ?? null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const activeReq = useRef<AbortController | null>(null);
-  const isManualReq = useRef(false);
-  const lastItemRef = useRef<string>(verdict.item);
 
-  // Clear result only if the item actually changed
-  useEffect(() => {
-    if (lastItemRef.current !== verdict.item) {
-      lastItemRef.current = verdict.item;
-      setResult(null);
-      setErrorMsg(null);
-    }
-  }, [verdict.item]);
-
-  const fetchSecondOpinion = useCallback(async (isManual = false) => {
+  async function fetchSecondOpinion() {
     if (!photo) return;
-
-    if (activeReq.current) {
-      activeReq.current.abort();
-    }
-
+    activeReq.current?.abort(); // a retry supersedes an older request
     const controller = new AbortController();
     activeReq.current = controller;
-    isManualReq.current = isManual;
+    const isCurrent = () => activeReq.current === controller;
     setLoading(true);
     setErrorMsg(null);
 
+    // 18-second timeout guard so multimodal vision calls have ample time
+    const timer = setTimeout(() => controller.abort(), 18000);
     try {
-      // 18-second timeout guard so multimodal vision calls have ample time
-      const timer = setTimeout(() => controller.abort(), 18000);
-
       const res = await fetch("/api/classify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: photo, mimeType: "image/jpeg" }),
         signal: controller.signal,
       });
-
-      clearTimeout(timer);
-
       if (res.ok) {
         const data: ClassificationResult = await res.json();
-        setResult(data);
-        setErrorMsg(null);
-      } else {
+        // Saved even if the user has moved on to another item, so it's there when they come back.
+        onResult?.(data);
+        if (isCurrent()) setResult(data);
+      } else if (isCurrent()) {
         const errData = await res.json().catch(() => null);
-        if (res.status === 429) {
-          setErrorMsg("Gemini rate limit reached (15/min). Wait a few seconds and retry.");
-        } else {
-          setErrorMsg(errData?.error || "Gemini could not classify this image.");
-        }
+        setErrorMsg(
+          res.status === 429
+            ? "Gemini rate limit reached (15/min). Wait a few seconds and retry."
+            : errData?.error || "Gemini could not classify this image.",
+        );
       }
     } catch (err: unknown) {
-      const isAbort = (err as Error)?.name === "AbortError";
-      if (isAbort && isManualReq.current) {
-        setErrorMsg("Gemini request took too long. Please tap to retry.");
-      } else if (!isAbort) {
-        setErrorMsg("Network error connecting to Gemini. Please retry.");
-      }
+      if (!isCurrent()) return; // superseded by a retry
+      setErrorMsg(
+        (err as Error)?.name === "AbortError"
+          ? "Gemini request took too long. Please tap to retry."
+          : "Network error connecting to Gemini. Please retry.",
+      );
     } finally {
-      setLoading(false);
-      isManualReq.current = false;
+      clearTimeout(timer);
+      if (isCurrent()) setLoading(false);
     }
-  }, [photo]);
+  }
 
-  // Trigger automatically ONLY when ONNX is low-confidence or unsure
+  // Ask automatically, once, when the on-device model is unsure about this item. The short delay
+  // skips items the user is only flicking past (and Auto-Scan frames that are replaced quickly).
+  // Requests are never aborted on unmount: once sent, Gemini has already done (and billed) the work.
   useEffect(() => {
-    if (!photo) return;
-
-    const isUncertain = verdict.lowConfidence || verdict.confidence < 0.6;
-    let debounceTimer: NodeJS.Timeout | null = null;
-
-    if (isUncertain && !result && !loading) {
-      debounceTimer = setTimeout(() => {
-        fetchSecondOpinion(false);
-      }, 1500);
-    }
-
-    return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
-      // Only abort background automatic requests, NEVER user-initiated ones
-      if (activeReq.current && !isManualReq.current) {
-        activeReq.current.abort();
-      }
-    };
-  }, [verdict, photo, fetchSecondOpinion, result, loading]);
+    if (!photo || result || !(verdict.lowConfidence || verdict.confidence < 0.6)) return;
+    const debounce = setTimeout(fetchSecondOpinion, 1500);
+    return () => clearTimeout(debounce);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per mounted item, see above
+  }, []);
 
   if (!photo) return null;
 
@@ -188,7 +163,7 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
           </div>
           <button
             type="button"
-            onClick={() => fetchSecondOpinion(true)}
+            onClick={fetchSecondOpinion}
             className="shrink-0 font-bold underline hover:text-amber-950"
           >
             Retry
@@ -198,7 +173,7 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={() => fetchSecondOpinion(true)}
+          onClick={fetchSecondOpinion}
           className="flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-colors hover:bg-white hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
         >
           <Sparkles className="h-3.5 w-3.5 text-indigo-500" />

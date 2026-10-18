@@ -3,6 +3,7 @@
 import { AlertTriangle, Cpu, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
+import type { ClassificationResult } from "@/lib/types";
 import { isSerialConnected, sendGatedBinCommand } from "@/lib/serial";
 import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
 import GeminiSecondOpinion from "@/components/GeminiSecondOpinion";
@@ -54,14 +55,21 @@ const ITEM_LABEL: Record<string, string> = {
 export const itemLabel = (c: string) => ITEM_LABEL[c] ?? c.replace(/_/g, " ");
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 
+/** Answers given for one detected item; kept by the parent so they survive switching items. */
+export type ItemNotes = { feedback?: string; gemini?: ClassificationResult };
+
 export default function VerdictCard({
   verdict,
   meta,
   photo,
+  notes = {},
+  onNotes,
 }: {
   verdict: Verdict;
   meta: ModelMeta;
   photo?: string | null;
+  notes?: ItemNotes;
+  onNotes?: (patch: ItemNotes) => void;
 }) {
   const style = verdict.lowConfidence ? UNCERTAIN_STYLE : (BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash);
   const [iotFired, setIotFired] = useState(false);
@@ -144,7 +152,12 @@ export default function VerdictCard({
       </p>
 
       {/* Gemini Multimodal Second Opinion (active on low confidence / on-demand) */}
-      <GeminiSecondOpinion verdict={verdict} photo={photo} />
+      <GeminiSecondOpinion
+        verdict={verdict}
+        photo={photo}
+        cached={notes.gemini}
+        onResult={(gemini) => onNotes?.({ gemini })}
+      />
 
       {/* Human-in-the-Loop Dataset Collection & User Verification */}
       <DatasetFeedbackWidget
@@ -152,6 +165,8 @@ export default function VerdictCard({
         predictedBin={verdict.bin}
         predictedItem={verdict.item}
         confidence={verdict.confidence}
+        submittedMessage={notes.feedback}
+        onSubmitted={(feedback) => onNotes?.({ feedback })}
       />
     </section>
   );

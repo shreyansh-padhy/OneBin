@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import CameraCapture from "@/components/CameraCapture";
 import SerialActuatorModal from "@/components/SerialActuatorModal";
-import VerdictCard from "@/components/VerdictCard";
+import VerdictCard, { type ItemNotes } from "@/components/VerdictCard";
 import type { Classifier, Verdict } from "@/lib/classifier";
 import { isSerialConnected } from "@/lib/serial";
 import { loadSorter, type SortedItem, type TwoStageSorter } from "@/lib/sorter";
@@ -30,6 +30,10 @@ export default function Sorter() {
   const [showSerialModal, setShowSerialModal] = useState(false);
   const [serialActive, setSerialActive] = useState(false);
   const loggedIndicesRef = useRef<Set<number>>(new Set());
+  // Per-item answers (feedback sent, Gemini second opinion), keyed `${scanId}:${itemIndex}`, so
+  // answering one detected item doesn't mark the others, and re-selecting an item keeps its answers.
+  const [scanId, setScanId] = useState(0);
+  const [itemNotes, setItemNotes] = useState<Record<string, ItemNotes>>({});
 
   const logItemTelemetry = useCallback((idx: number, itemList: SortedItem[]) => {
     const target = itemList[idx];
@@ -76,6 +80,8 @@ export default function Sorter() {
       const s = sorter.current ?? (await loadSorter());
       const items = await s.sort(frame, frame.width, frame.height);
       setSortedItems(items);
+      setScanId((n) => n + 1);
+      setItemNotes({});
       setSelectedIdx(0);
       setImageDims({ width: frame.width, height: frame.height });
       loggedIndicesRef.current.clear();
@@ -122,12 +128,17 @@ export default function Sorter() {
     setPhoto(null);
     setVerdict(null);
     setSortedItems([]);
+    setItemNotes({});
     setSelectedIdx(0);
     setImageDims(null);
     setError(null);
   }
 
   const ready = model.status === "ready";
+  const itemKey = `${scanId}:${selectedIdx}`;
+  // Callbacks close over this render's itemKey, so a late answer is saved to the item it was for.
+  const saveNote = (key: string) => (patch: ItemNotes) =>
+    setItemNotes((notes) => ({ ...notes, [key]: { ...notes[key], ...patch } }));
 
   return (
     <div className="space-y-4">
@@ -329,9 +340,12 @@ export default function Sorter() {
       {/* Live Verdict Display for currently active item (isolated crop, not entire scene) */}
       {verdict && sorter.current && (
         <VerdictCard
+          key={itemKey} // fresh card per item: no feedback/Gemini state leaks between items
           verdict={verdict}
           meta={sorter.current.classifier.meta}
           photo={sortedItems[selectedIdx]?.cropDataUrl || photo}
+          notes={itemNotes[itemKey] ?? {}}
+          onNotes={saveNote(itemKey)}
         />
       )}
 

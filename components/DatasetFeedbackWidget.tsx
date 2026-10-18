@@ -9,6 +9,9 @@ interface DatasetFeedbackWidgetProps {
   predictedBin: string;
   predictedItem: string;
   confidence: number;
+  /** Set when this item was already answered (shows the thank-you instead of asking again). */
+  submittedMessage?: string;
+  onSubmitted?: (message: string) => void;
 }
 
 const CONSENT_STORAGE_KEY = "onebin_dataset_consent_opt_in";
@@ -18,13 +21,21 @@ export default function DatasetFeedbackWidget({
   predictedBin,
   predictedItem,
   confidence,
+  submittedMessage,
+  onSubmitted,
 }: DatasetFeedbackWidgetProps) {
   const [consent, setConsent] = useState<boolean>(false);
-  const [step, setStep] = useState<"initial" | "correction" | "submitted">("initial");
+  const [step, setStep] = useState<"initial" | "correction" | "submitted">(submittedMessage ? "submitted" : "initial");
   const [selectedBin, setSelectedBin] = useState<string>("recycling");
   const [customItem, setCustomItem] = useState<string>("");
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [submitMessage, setSubmitMessage] = useState<string>("");
+  const [submitMessage, setSubmitMessage] = useState<string>(submittedMessage ?? "");
+
+  const finish = (message: string) => {
+    setSubmitMessage(message);
+    setStep("submitted");
+    onSubmitted?.(message);
+  };
 
   useEffect(() => {
     try {
@@ -48,8 +59,7 @@ export default function DatasetFeedbackWidget({
 
   const handleConfirmCorrect = async () => {
     if (!consent) {
-      setSubmitMessage("Thank you for your feedback!");
-      setStep("submitted");
+      finish("Thank you for your feedback!");
       return;
     }
 
@@ -63,8 +73,7 @@ export default function DatasetFeedbackWidget({
       consentGranted: consent,
     });
     setSubmitting(false);
-    setSubmitMessage(result.message || "Confirmed! Added to verified dataset.");
-    setStep("submitted");
+    finish(result.message || "Confirmed! Added to verified dataset.");
   };
 
   const handleStartCorrection = () => {
@@ -87,8 +96,7 @@ export default function DatasetFeedbackWidget({
       consentGranted: consent,
     });
     setSubmitting(false);
-    setSubmitMessage(result.message || `Correction recorded: Marked as ${selectedBin.toUpperCase()}.`);
-    setStep("submitted");
+    finish(result.message || `Correction recorded: Marked as ${selectedBin.toUpperCase()}.`);
   };
 
   if (step === "submitted") {
