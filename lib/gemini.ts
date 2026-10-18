@@ -81,7 +81,7 @@ export async function classifyWasteImage(
   mimeType = "image/jpeg"
 ): Promise<ClassificationResult> {
   const ai = getGeminiClient();
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
   // Clean data URL prefix if present
   let cleanBase64 = base64Data;

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
 import { isSerialConnected, sendGatedBinCommand } from "@/lib/serial";
 import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
+import GeminiSecondOpinion from "@/components/GeminiSecondOpinion";
 
 // Full class names so Tailwind keeps them (colors are defined in tailwind.config.ts).
 const BIN_STYLE: Record<string, { card: string; bar: string; text: string }> = {
@@ -101,6 +102,9 @@ export default function VerdictCard({
         Top guesses: {verdict.topItems.map((t) => `${itemLabel(t.item)} ${pct(t.p)}`).join(" · ")} ·{" "}
         {Math.round(verdict.ms)} ms (on-device)
       </p>
+
+      {/* Gemini Multimodal Second Opinion (active on low confidence / on-demand) */}
+      <GeminiSecondOpinion verdict={verdict} photo={photo} />
 
       {/* Human-in-the-Loop Dataset Collection & User Verification */}
       <DatasetFeedbackWidget
