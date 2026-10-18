@@ -1,5 +1,5 @@
 {
-  "source": "best_taco.pt",
+  "source": "best.pt",
   "classes": [
     "battery",
     "biological",
@@ -12,7 +12,6 @@
     "plastic_bag",
     "shoes",
     "styrofoam",
-    "tissue",
     "trash"
   ],
   "size": 320,
@@ -43,7 +42,6 @@
     "plastic_bag": "trash",
     "shoes": "trash",
     "styrofoam": "trash",
-    "tissue": "compost",
     "trash": "trash"
   },
   "binDisplay": {
