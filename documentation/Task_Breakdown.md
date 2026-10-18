@@ -136,12 +136,10 @@
   - Falls back to `BroadcastChannel` and `localStorage` when offline or unconfigured.
 
 ### Task 3.2: Supabase Storage & Telemetry Database Schema Script
-- **Status**: `[READY FOR BUILDER]`
+- **Status**: `[COMPLETED]` (Committed in PR #15, Schema executed on Supabase)
 - **Target Files**: `supabase/schema.sql`
 - **Objective**: Provide an automated, idempotent SQL migration script configuring the `scans` table, indexes on `created_at` and `bin`, `supabase_realtime` publication enablement, `waste-dataset` storage bucket definition with permissive insert policies, and a `get_bin_analytics()` RPC function computing diversion rates.
-- **Acceptance Criteria**:
-  - Idempotent SQL script executing cleanly in Supabase SQL Editor.
-  - Realtime publication added for table `scans`.
+- **Delivered**: `supabase/schema.sql` committed and verified live on Supabase project `diiyljscftybrygsokdf` with RLS policies, `scans` table, `waste-dataset` bucket, and `get_bin_analytics()` RPC.
 
 ### Task 3.3: Vercel Web Analytics & Speed Insights
 - **Status**: `[READY FOR BUILDER]`
@@ -150,3 +148,26 @@
 - **Acceptance Criteria**:
   - `npm run build` succeeds without bundle bloat.
   - `<Analytics />` and `<SpeedInsights />` mounted at root layout.
+
+### Task 3.4: Automated 3-Way Integration & Connectivity Health Check
+- **Status**: `[READY FOR BUILDER]`
+- **Target Files**: `scripts/verify_3way_connection.mjs`, `package.json`
+- **Objective**: Build an automated integration verification script that programmatically tests all three connected services:
+  1. **GitHub $\rightarrow$ Vercel**: Verifies latest commit SHA is deployed and returns HTTP 200 with COOP/COEP headers.
+  2. **Vercel $\rightarrow$ Supabase**: Verifies Vercel environment variables (`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`) are present and valid.
+  3. **Supabase Operations**: Executes end-to-end telemetry insertion, row readback, RPC analytics query (`get_bin_analytics`), and storage bucket file listing on `waste-dataset`.
+- **Acceptance Criteria**:
+  - `npm run verify` runs the automated health check and outputs a clean green pass/fail matrix.
+  - Zero sensitive service keys leaked (runs strictly with public `anon` credentials).
+
+### Task 3.5: Active Learning Training Ingestion Pipeline (`scripts/sync_training_data.py`)
+- **Status**: `[READY FOR BUILDER]`
+- **Target Files**: `scripts/sync_training_data.py`, `README.md`
+- **Objective**: Build a Python CLI utility that connects to Supabase, pulls all user-consented and ground-truth verified waste photos and labels from the `waste-dataset` storage bucket and `scans` table, and organizes them into `real/{fine_class}/{id}.jpg` for seamless model fine-tuning with `train.py`.
+- **Architectural Constraints & Acceptance Criteria**:
+  - Reads credentials from `.env.local` or environment variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+  - Maps user material chip selections (🥫 Metal, 📄 Paper, 📦 Cardboard, 🧴 Plastic, 🍾 Glass, 🍎 Food -> biological, etc.) to the 12 fine classes defined in `bins.py`.
+  - Downloads images into `real/<fine_class>/` with deduplication by scan ID.
+  - Displays a summary table of newly downloaded training samples.
+  - Verifiable compatibility: directory format directly accepted by `python train.py --extra real --init checkpoints/best.pt`.
+

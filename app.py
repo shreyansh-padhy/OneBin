@@ -1,51 +1,41 @@
 """Webcam / upload demo.  Run: python app.py  then open the printed URL."""
-from pathlib import Path
+from collections import Counter
 
 import gradio as gr
-import torch
 
-from bins import BIN_DISPLAY, BINS, WARN
-from train import bin_matrix, build_model, make_transforms
+from bins import BIN_DISPLAY, WARN
+from sorter import Sorter, draw
 
-CKPT = Path(__file__).parent / "checkpoints/best.pt"
 LOW_CONFIDENCE = 0.6
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-ckpt = torch.load(CKPT, map_location=device)
-classes = ckpt["classes"]
-_, eval_tf = make_transforms(ckpt["size"])
-model = build_model(len(classes))
-model.load_state_dict(ckpt["model"])
-model.eval().to(device)
-M = bin_matrix(classes)
+sorter = Sorter()
 
 
-@torch.no_grad()
 def classify(img):
     if img is None:
-        return "", {}
-    probs = model(eval_tf(img.convert("RGB")).unsqueeze(0).to(device)).softmax(1)[0].cpu()
-    bin_probs = probs @ M
-    best = BINS[bin_probs.argmax()]
-    conf = bin_probs.max().item()
-    top_item = classes[probs.argmax()]
-
-    verdict = f"## {BIN_DISPLAY[best]}\n**Looks like:** {top_item}  ·  **confidence:** {conf:.0%}"
-    if top_item in WARN:
-        verdict += f"\n\n{WARN[top_item]}"
-    if conf < LOW_CONFIDENCE:
-        verdict += "\n\n⚠️ Not sure — try another angle, or when in doubt, trash."
-    return verdict, {b: float(p) for b, p in zip(BINS, bin_probs)}
+        return None, ""
+    items = sorter.sort(img)
+    counts = Counter(it["bin"] for it in items)
+    lines = ["## " + "  ·  ".join(f"{BIN_DISPLAY[b]} × {n}" for b, n in counts.most_common())]
+    for i, it in enumerate(sorted(items, key=lambda it: it["box"][0] if it["box"] else 0), 1):
+        line = f"{i}. {BIN_DISPLAY[it['bin']]} — looks like **{it['item']}** ({it['bin_conf']:.0%})"
+        if it["item"] in WARN:
+            line += f"  \n   {WARN[it['item']]}"
+        if it["bin_conf"] < LOW_CONFIDENCE:
+            line += "  \n   ⚠️ Not sure — try another angle, or when in doubt, trash."
+        lines.append(line)
+    if items[0]["box"] is None:
+        lines.append("\n_No separate items found — classified the whole photo as one item._")
+    return draw(img, items), "\n".join(lines)
 
 
 with gr.Blocks(title="One Bin") as demo:
     gr.Markdown("# One Bin — compost, recycling, or trash?")
     with gr.Row():
-        inp = gr.Image(type="pil", sources=["webcam", "upload"], label="Item")
+        inp = gr.Image(type="pil", sources=["webcam", "upload"], label="Items")
         with gr.Column():
+            out_img = gr.Image(label="Sorted", interactive=False)
             verdict = gr.Markdown()
-            detail = gr.Label(num_top_classes=3, label="Bin")
-    inp.change(classify, inp, [verdict, detail])
+    inp.change(classify, inp, [out_img, verdict])
 
 if __name__ == "__main__":
     demo.launch()

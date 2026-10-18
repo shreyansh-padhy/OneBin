@@ -33,6 +33,7 @@ Thumbs.db
 __pycache__/
 checkpoints/*
 !checkpoints/best.pt
+!checkpoints/detector.pt
 *.log
 real/
 *.pyc

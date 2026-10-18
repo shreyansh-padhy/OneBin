@@ -45,3 +45,12 @@ Sources used by One Bin: the dataset, the model and training methods, and the so
 12. **Kaggle.** *kagglehub: Python client for Kaggle resources.* https://github.com/Kaggle/kagglehub
 
     This is used to download the dataset.
+
+## Multi-object detection
+
+13. **Proença, P. F., & Simões, P.** (2020). *TACO: Trash Annotations in Context for Litter Detection.* arXiv:2003.06975. https://arxiv.org/abs/2003.06975. Dataset: http://tacodataset.org. License: CC BY 4.0.
+
+    This is the training data for the item detector (`prepare_taco.py` turns it into a single-class "item" YOLO dataset).
+14. **Ultralytics.** *Ultralytics YOLO* (YOLO26-s, starting from COCO-pretrained `yolo26s.pt`). https://github.com/ultralytics/ultralytics. License: AGPL-3.0.
+
+    This is the detector architecture and training framework (`train_detector.py`, `sorter.py`).
