@@ -175,11 +175,24 @@ export default function Sorter() {
               )}
             </div>
           ) : (
-            <p className="p-6 text-center text-sm text-slate-500">
-              Take a photo or drop an image of items.
-              <br />
-              Multi-object detector identifies and sorts items automatically.
-            </p>
+            <div className="relative flex flex-col items-center justify-center p-6 text-center">
+              {/* Optical scanner corner reticles */}
+              <div className="pointer-events-none absolute top-3 left-3 h-4 w-4 border-t-2 border-l-2 border-slate-400 rounded-tl" />
+              <div className="pointer-events-none absolute top-3 right-3 h-4 w-4 border-t-2 border-r-2 border-slate-400 rounded-tr" />
+              <div className="pointer-events-none absolute bottom-3 left-3 h-4 w-4 border-b-2 border-l-2 border-slate-400 rounded-bl" />
+              <div className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 border-b-2 border-r-2 border-slate-400 rounded-br" />
+
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 border border-slate-200/80 text-slate-600 shadow-sm">
+                <Camera className="h-6 w-6 text-slate-500" />
+              </div>
+
+              <p className="text-sm font-semibold text-slate-800">
+                Drop item photo or open camera
+              </p>
+              <p className="mt-1 text-xs text-slate-500 max-w-[240px]">
+                TACO multi-object detector identifies items on the belt in real-time
+              </p>
+            </div>
           )}
           {busy && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/60">
@@ -195,17 +208,17 @@ export default function Sorter() {
             type="button"
             onClick={() => setCameraOpen(true)}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            <Camera className="h-5 w-5" /> {photo ? "Retake" : "Camera"}
+            <Camera className="h-5 w-5 text-emerald-400" /> {photo ? "Retake" : "Open Camera"}
           </button>
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-800 hover:bg-slate-100 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            <Upload className="h-5 w-5" /> Upload
+            <Upload className="h-5 w-5 text-slate-500" /> Upload Image
           </button>
           <input
             ref={fileInput}
@@ -225,32 +238,46 @@ export default function Sorter() {
 
       {/* Multi-Item Detected Selector Pill Bar */}
       {sortedItems.length > 1 && sortedItems[0].box && (
-        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+        <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-md p-3.5 shadow-sm">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
             <span className="flex items-center gap-1.5 text-emerald-700">
               <Layers className="h-4 w-4" /> Multi-Item Stream Detected
             </span>
-            <span className="text-slate-500">{sortedItems.length} items found</span>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600">
+              {sortedItems.length} items
+            </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {sortedItems.map((it, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setSelectedIdx(idx);
-                  setVerdict(it.verdict);
-                }}
-                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all ${
-                  idx === selectedIdx
-                    ? "border-slate-900 bg-slate-900 text-white shadow-sm"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                }`}
-              >
-                <span>#{idx + 1} {it.verdict.bin.toUpperCase()}</span>
-                <span className="text-[10px] opacity-75">({it.verdict.item})</span>
-              </button>
-            ))}
+            {sortedItems.map((it, idx) => {
+              const isSelected = idx === selectedIdx;
+              const binStyle =
+                it.verdict.bin === "compost"
+                  ? isSelected
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                    : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                  : it.verdict.bin === "recycling"
+                  ? isSelected
+                    ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                    : "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100"
+                  : isSelected
+                  ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                  : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200";
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIdx(idx);
+                    setVerdict(it.verdict);
+                  }}
+                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${binStyle}`}
+                >
+                  <span>#{idx + 1} {it.verdict.bin.toUpperCase()}</span>
+                  <span className="text-[10px] opacity-80">({it.verdict.item})</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

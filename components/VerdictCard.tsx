@@ -7,11 +7,26 @@ import { isSerialConnected, sendGatedBinCommand } from "@/lib/serial";
 import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
 import GeminiSecondOpinion from "@/components/GeminiSecondOpinion";
 
-// Full class names so Tailwind keeps them (colors are defined in tailwind.config.ts).
-const BIN_STYLE: Record<string, { card: string; bar: string; text: string }> = {
-  compost: { card: "border-compost bg-compost-light", bar: "bg-compost", text: "text-compost-dark" },
-  recycling: { card: "border-recycling bg-recycling-light", bar: "bg-recycling", text: "text-recycling-dark" },
-  trash: { card: "border-trash bg-trash-light", bar: "bg-trash", text: "text-trash-dark" },
+// Spatial theme tokens aligned with antigravity-design-expert & tailwind-design-system
+const BIN_STYLE: Record<string, { card: string; bar: string; text: string; badge: string }> = {
+  compost: {
+    card: "border-emerald-200/90 bg-gradient-to-b from-emerald-50/90 via-white to-emerald-50/30 shadow-[0_12px_36px_rgba(16,185,129,0.14)] ring-1 ring-emerald-500/20",
+    bar: "bg-emerald-500",
+    text: "text-emerald-900",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  },
+  recycling: {
+    card: "border-blue-200/90 bg-gradient-to-b from-blue-50/90 via-white to-blue-50/30 shadow-[0_12px_36px_rgba(37,99,235,0.14)] ring-1 ring-blue-500/20",
+    bar: "bg-blue-500",
+    text: "text-blue-900",
+    badge: "bg-blue-100 text-blue-800 border-blue-300",
+  },
+  trash: {
+    card: "border-slate-200/90 bg-gradient-to-b from-slate-50/90 via-white to-slate-50/30 shadow-[0_12px_36px_rgba(71,85,105,0.14)] ring-1 ring-slate-500/20",
+    bar: "bg-slate-500",
+    text: "text-slate-900",
+    badge: "bg-slate-100 text-slate-800 border-slate-300",
+  },
 };
 
 const ITEM_LABEL: Record<string, string> = {
@@ -60,10 +75,15 @@ export default function VerdictCard({
     <section aria-live="polite" className={`space-y-4 rounded-2xl border-2 p-5 ${style.card}`}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Put it in</p>
-          <h2 className={`text-3xl font-extrabold ${style.text}`}>{meta.binDisplay[verdict.bin] ?? verdict.bin}</h2>
+          <div className="flex items-center gap-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Destination Stream</p>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${style.badge}`}>
+              {verdict.bin.toUpperCase()}
+            </span>
+          </div>
+          <h2 className={`mt-0.5 text-3xl font-black tracking-tight ${style.text}`}>{meta.binDisplay[verdict.bin] ?? verdict.bin}</h2>
           <p className="mt-1 text-sm text-slate-700">
-            Looks like: <span className="font-semibold">{itemLabel(verdict.item)}</span> · {pct(verdict.confidence)} sure
+            Identified: <span className="font-semibold text-slate-900">{itemLabel(verdict.item)}</span> · <span className="font-semibold">{pct(verdict.confidence)}</span> confidence
           </p>
         </div>
 
