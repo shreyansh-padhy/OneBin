@@ -67,13 +67,22 @@ def source_of(path):
     return name.split("__")[0] if "__" in name else "own"
 
 
-def split_indices(keys, seed=0, val=0.1, test=0.1):
+# Sources whose files carry their own split (<source>__<split>_...): TACO crops keep the
+# split of the photo they came from, so the detector's test photos stay unseen here too.
+FIXED_SPLIT_SOURCES = {"taco"}
+
+
+def split_indices(keys, seed=0, val=0.1, test=0.1, paths=None):
     """Train/val/test split stratified by key (here: (source, class)), fixed seed."""
     rng = random.Random(seed)
     by_key = {}
-    for i, k in enumerate(keys):
-        by_key.setdefault(k, []).append(i)
     tr, va, te = [], [], []
+    fixed = {"train": tr, "val": va, "test": te}
+    for i, k in enumerate(keys):
+        if paths and source_of(paths[i]) in FIXED_SPLIT_SOURCES:
+            fixed[Path(paths[i]).name.split("__")[1].split("_")[0]].append(i)
+        else:
+            by_key.setdefault(k, []).append(i)
     for idxs in by_key.values():
         rng.shuffle(idxs)
         n_te, n_va = int(len(idxs) * test), int(len(idxs) * val)
@@ -141,7 +150,7 @@ def main():
     base_eval = datasets.ImageFolder(args.data, transform=eval_tf)
     classes = base_train.classes
     sources = [source_of(p) for p, _ in base_train.samples]
-    tr, va, te = split_indices(list(zip(sources, base_train.targets)))
+    tr, va, te = split_indices(list(zip(sources, base_train.targets)), paths=[p for p, _ in base_train.samples])
     print(f"train {len(tr)}  val {len(va)}  test {len(te)}  classes {classes}")
 
     train_sets = [Subset(base_train, tr)]
