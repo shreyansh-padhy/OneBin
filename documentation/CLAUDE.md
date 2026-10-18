@@ -59,10 +59,11 @@ The model predicts **10 fine-grained classes**. Bins are a separate mapping laye
 ### Web app (in-browser inference)
 
 - [export_onnx.py](../export_onnx.py) writes `public/models/onebin.onnx` (fp16 weights, fp32 input and output; it outputs softmax probabilities) and `public/models/onebin.json`. The JSON holds the class list, input size, normalization and the bin rules copied from `bins.py`. The web app never hardcodes classes or bins: **after changing `bins.py` or retraining, rerun `export_onnx.py`** and commit both files.
-- [lib/classifier.ts](../lib/classifier.ts) loads the model once, then preprocesses each image the same way as `eval_tf` (center square, resized to `size`, normalized), runs it, and sums class probabilities into bins.
-- UI: [components/Sorter.tsx](../components/Sorter.tsx) (state, upload and drag-drop), [CameraCapture.tsx](../components/CameraCapture.tsx), and [VerdictCard.tsx](../components/VerdictCard.tsx).
+- [lib/sorter.ts](../lib/sorter.ts) and [lib/classifier.ts](../lib/classifier.ts): Loads `public/models/detector.onnx` and `public/models/onebin.onnx`. It performs client-side edge bounding box detection and classification with canvas overlays.
+- UI: [components/Sorter.tsx](../components/Sorter.tsx) (state, upload and drag-drop), [BoundingBoxOverlay.tsx](../components/BoundingBoxOverlay.tsx), [CameraCapture.tsx](../components/CameraCapture.tsx), and [VerdictCard.tsx](../components/VerdictCard.tsx).
+- **Physical Actuation**: [lib/serial.ts](../lib/serial.ts) provides `sendGatedBinCommand` which gates servo lid triggers by confidence ($\ge 60\%$) and debounces by 3.5s cooldown to prevent servo thrashing during continuous Auto-Scan.
 - [next.config.mjs](../next.config.mjs) sends COOP/COEP headers so onnxruntime-web can use threads. Anything loaded from another origin (scripts, images, iframes) must send CORP/CORS headers, or the browser will block it.
-- The model is a normal git file (about 42 MB), not LFS, because CI and Vercel deploy from a plain checkout.
+- **Python vs. Web Scope**: The web app runs ONNX WASM models in-browser. The Python scripts (`sorter.py`, `app.py`) run native PyTorch / Ultralytics models (`checkpoints/detector.pt`, `checkpoints/best.pt`) for local facility batch sorting and Gradio demos. All Python dependencies are tracked in `requirements.txt`.
 
 ## Conventions and gotchas
 

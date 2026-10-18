@@ -110,7 +110,7 @@ def normalize_class(item_label: str, bin_name: str) -> str:
         return "styrofoam"
     if any(k in item_clean for k in ["battery", "batteries"]):
         return "battery"
-    if any(k in item_clean for k in ["apple", "banana", "food", "organic", "peel", "bread", "vegetable", "fruit"]):
+    if any(k in item_clean for k in ["apple", "banana", "food", "organic", "peel", "bread", "vegetable", "fruit", "compost"]):
         return "biological"
     if any(k in item_clean for k in ["cardboard", "box", "shipping_box", "corrugated"]):
         return "cardboard"
@@ -242,12 +242,20 @@ def main():
 
     downloaded_counts = defaultdict(int)
     skipped_count = 0
+    covered_storage_paths = set()
 
-    # 4. Ingest from scans table
+    # 4. Ingest from scans table (primary ground-truth source)
     for scan in scans:
         img_url = scan.get("image_url")
         if not img_url:
             continue
+
+        # Track relative bucket path to prevent duplicate downloads from storage
+        if "waste-dataset/" in img_url:
+            rel_path = img_url.split("waste-dataset/", 1)[1].lstrip("/")
+            covered_storage_paths.add(rel_path)
+            covered_storage_paths.add(Path(rel_path).name)
+
         scan_id = str(scan.get("id", ""))
         fine_class = normalize_class(scan.get("item", ""), scan.get("bin", ""))
         target_file = output_dir / fine_class / f"scan_{scan_id}.jpg"
@@ -262,7 +270,7 @@ def main():
             if download_image(img_url, target_file):
                 downloaded_counts[fine_class] += 1
 
-    # 5. Ingest from storage bucket
+    # 5. Ingest from storage bucket (only for orphaned uploads not covered by scans table)
     for obj in storage_objs:
         full_path = obj.get("full_path") or obj.get("name", "")
         if not full_path or full_path.startswith("."):
@@ -272,9 +280,24 @@ def main():
         if not full_path.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
             continue
 
+        # Skip if this image was already downloaded via scans table
+        rel_clean = full_path.lstrip("/")
+        if rel_clean in covered_storage_paths or Path(full_path).name in covered_storage_paths:
+            skipped_count += 1
+            continue
+
         parts = full_path.split("/")
-        candidate_label = parts[-2] if len(parts) > 1 else parts[0].split("_")[0]
-        fine_class = normalize_class(candidate_label, "recycling")
+        # Folder determines the municipal stream (compost / recycling / trash)
+        bin_name = parts[-2] if len(parts) > 1 else "recycling"
+
+        # Filename format: <timestamp>-<item>.jpg (e.g. 1792287403845-metal.jpg)
+        filename_stem = Path(full_path).stem
+        if "-" in filename_stem:
+            candidate_item = filename_stem.rsplit("-", 1)[-1]
+        else:
+            candidate_item = filename_stem
+
+        fine_class = normalize_class(candidate_item, bin_name)
         clean_filename = re.sub(r"[^a-zA-Z0-9_\-\.]", "_", Path(full_path).name)
 
         target_file = output_dir / fine_class / f"bucket_{clean_filename}"

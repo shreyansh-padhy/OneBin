@@ -3,7 +3,7 @@
 import { AlertTriangle, Cpu, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
-import { isSerialConnected, sendBinCommand } from "@/lib/serial";
+import { isSerialConnected, sendGatedBinCommand } from "@/lib/serial";
 import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
 
 // Full class names so Tailwind keeps them (colors are defined in tailwind.config.ts).
@@ -43,10 +43,10 @@ export default function VerdictCard({
   const style = BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash;
   const [iotFired, setIotFired] = useState(false);
 
-  // IoT Web Serial actuation: automatically send command if serial port is open
+  // IoT Web Serial actuation: gated command preventing flapping and low-confidence triggers
   useEffect(() => {
     if (isSerialConnected()) {
-      sendBinCommand(verdict.bin).then((success) => {
+      sendGatedBinCommand(verdict.bin, verdict.confidence, verdict.lowConfidence).then((success) => {
         if (success) {
           setIotFired(true);
           setTimeout(() => setIotFired(false), 2000);

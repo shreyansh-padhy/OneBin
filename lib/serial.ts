@@ -70,6 +70,39 @@ export async function sendBinCommand(bin: string): Promise<boolean> {
   }
 }
 
+let lastActuatedBin: string | null = null;
+let lastActuatedTime = 0;
+
+/**
+ * Gated serial actuation for continuous scanning modes (Auto-Scan).
+ * Enforces:
+ * 1. Confidence threshold: Must not be a lowConfidence prediction (confidence >= 0.60).
+ * 2. Deduplication & Cooldown: Only opens lid if bin target has changed, or if >= cooldownMs (default 3.5s)
+ *    has elapsed since last actuation, preventing servo overheating and lid flapping.
+ */
+export async function sendGatedBinCommand(
+  bin: string,
+  confidence: number,
+  lowConfidence: boolean,
+  cooldownMs = 3500
+): Promise<boolean> {
+  if (lowConfidence || confidence < 0.6) {
+    return false;
+  }
+
+  const now = Date.now();
+  if (bin === lastActuatedBin && now - lastActuatedTime < cooldownMs) {
+    return false;
+  }
+
+  const success = await sendBinCommand(bin);
+  if (success) {
+    lastActuatedBin = bin;
+    lastActuatedTime = now;
+  }
+  return success;
+}
+
 export async function disconnectSerial(): Promise<void> {
   try {
     if (writer) {
