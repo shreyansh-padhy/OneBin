@@ -13,23 +13,36 @@ interface GeminiSecondOpinionProps {
 export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpinionProps) {
   const [result, setResult] = useState<ClassificationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const activeReq = useRef<AbortController | null>(null);
+  const isManualReq = useRef(false);
+  const lastItemRef = useRef<string>(verdict.item);
 
-  const fetchSecondOpinion = useCallback(async () => {
+  // Clear result only if the item actually changed
+  useEffect(() => {
+    if (lastItemRef.current !== verdict.item) {
+      lastItemRef.current = verdict.item;
+      setResult(null);
+      setErrorMsg(null);
+    }
+  }, [verdict.item]);
+
+  const fetchSecondOpinion = useCallback(async (isManual = false) => {
     if (!photo) return;
 
-    // Abort any ongoing request
     if (activeReq.current) {
       activeReq.current.abort();
     }
 
     const controller = new AbortController();
     activeReq.current = controller;
+    isManualReq.current = isManual;
     setLoading(true);
+    setErrorMsg(null);
 
     try {
-      // 8-second timeout guard to ensure verdict UI is never blocked
-      const timer = setTimeout(() => controller.abort(), 8000);
+      // 18-second timeout guard so multimodal vision calls have ample time
+      const timer = setTimeout(() => controller.abort(), 18000);
 
       const res = await fetch("/api/classify", {
         method: "POST",
@@ -43,39 +56,51 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
       if (res.ok) {
         const data: ClassificationResult = await res.json();
         setResult(data);
+        setErrorMsg(null);
+      } else {
+        const errData = await res.json().catch(() => null);
+        if (res.status === 429) {
+          setErrorMsg("Gemini rate limit reached (15/min). Wait a few seconds and retry.");
+        } else {
+          setErrorMsg(errData?.error || "Gemini could not classify this image.");
+        }
       }
-    } catch {
-      // Fail silently per specification: ONNX result stands alone without disruption
+    } catch (err: unknown) {
+      const isAbort = (err as Error)?.name === "AbortError";
+      if (isAbort && isManualReq.current) {
+        setErrorMsg("Gemini request took too long. Please tap to retry.");
+      } else if (!isAbort) {
+        setErrorMsg("Network error connecting to Gemini. Please retry.");
+      }
     } finally {
       setLoading(false);
+      isManualReq.current = false;
     }
   }, [photo]);
 
-  // Trigger automatically when ONNX is low-confidence or unsure
+  // Trigger automatically ONLY when ONNX is low-confidence or unsure
   useEffect(() => {
-    setResult(null);
     if (!photo) return;
 
     const isUncertain = verdict.lowConfidence || verdict.confidence < 0.6;
     let debounceTimer: NodeJS.Timeout | null = null;
 
-    if (isUncertain) {
-      // Debounce by 1200ms: prevents continuous cancellation storms during live 900ms Auto-Scan pulses.
-      // Fires only when the camera holds steady on an object or when user pauses/freezes.
+    if (isUncertain && !result && !loading) {
       debounceTimer = setTimeout(() => {
-        fetchSecondOpinion();
-      }, 1200);
+        fetchSecondOpinion(false);
+      }, 1500);
     }
 
     return () => {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
       }
-      if (activeReq.current) {
+      // Only abort background automatic requests, NEVER user-initiated ones
+      if (activeReq.current && !isManualReq.current) {
         activeReq.current.abort();
       }
     };
-  }, [verdict, photo, fetchSecondOpinion]);
+  }, [verdict, photo, fetchSecondOpinion, result, loading]);
 
   if (!photo) return null;
 
@@ -83,7 +108,7 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
     return (
       <div className="flex items-center gap-2 rounded-xl border border-indigo-200/80 bg-indigo-50/70 p-3 text-xs text-indigo-900 shadow-sm animate-pulse">
         <Sparkles className="h-4 w-4 text-indigo-600 animate-spin" />
-        <span>Consulting Gemini Vision for a second opinion on this ambiguous item…</span>
+        <span>Consulting Gemini Vision for a second opinion on this item…</span>
       </div>
     );
   }
@@ -152,17 +177,34 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
     );
   }
 
-  // If high-confidence, offer on-demand second opinion button for judges / testers
+  // If high-confidence or after error, offer on-demand second opinion button with retry banner
   return (
-    <div className="flex justify-end">
-      <button
-        type="button"
-        onClick={() => fetchSecondOpinion()}
-        className="flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-colors hover:bg-white hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
-      >
-        <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-        <span>Ask Gemini Second Opinion</span>
-      </button>
+    <div className="space-y-2">
+      {errorMsg && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-amber-200/90 bg-amber-50/90 p-2.5 text-xs text-amber-900">
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => fetchSecondOpinion(true)}
+            className="shrink-0 font-bold underline hover:text-amber-950"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => fetchSecondOpinion(true)}
+          className="flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition-colors hover:bg-white hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-1"
+        >
+          <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+          <span>Ask Gemini Second Opinion</span>
+        </button>
+      </div>
     </div>
   );
 }
