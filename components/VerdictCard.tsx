@@ -4,6 +4,7 @@ import { AlertTriangle, Cpu, Info, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { ModelMeta, Verdict } from "@/lib/classifier";
 import { isSerialConnected, sendBinCommand } from "@/lib/serial";
+import DatasetFeedbackWidget from "@/components/DatasetFeedbackWidget";
 
 // Full class names so Tailwind keeps them (colors are defined in tailwind.config.ts).
 const BIN_STYLE: Record<string, { card: string; bar: string; text: string }> = {
@@ -33,6 +34,7 @@ const pct = (p: number) => `${Math.round(p * 100)}%`;
 export default function VerdictCard({
   verdict,
   meta,
+  photo,
 }: {
   verdict: Verdict;
   meta: ModelMeta;
@@ -163,6 +165,14 @@ export default function VerdictCard({
         Top guesses: {verdict.topItems.map((t) => `${itemLabel(t.item)} ${pct(t.p)}`).join(" · ")} ·{" "}
         {Math.round(verdict.ms)} ms (on-device)
       </p>
+
+      {/* Human-in-the-Loop Dataset Collection & User Verification */}
+      <DatasetFeedbackWidget
+        photo={photo}
+        predictedBin={verdict.bin}
+        predictedItem={verdict.item}
+        confidence={verdict.confidence}
+      />
     </section>
   );
 }

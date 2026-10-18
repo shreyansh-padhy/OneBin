@@ -207,3 +207,128 @@ export function computeImpactStats(history: ScanEvent[]): ImpactStats {
     co2SavedKg,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Human-in-the-Loop Dataset Collection & User Feedback
+// ---------------------------------------------------------------------------
+
+export interface DatasetFeedback {
+  photoBase64?: string;
+  predictedItem: string;
+  predictedBin: string;
+  confidence: number;
+  userConfirmed: boolean;
+  correctedBin?: string;
+  correctedItem?: string;
+  consentGranted: boolean;
+}
+
+const DATASET_STORAGE_KEY = "onebin_user_dataset_samples";
+
+export function getLocalDatasetSamples(): DatasetFeedback[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(DATASET_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Uploads a user-consented photo and classification ground-truth to Supabase Storage
+ * ('waste-dataset' bucket) and records the metadata in the database.
+ */
+export async function submitDatasetFeedback(feedback: DatasetFeedback): Promise<{ success: boolean; message: string; url?: string }> {
+  if (!feedback.consentGranted) {
+    return { success: false, message: "User consent not granted. Skipped upload." };
+  }
+
+  const finalBin = feedback.userConfirmed ? feedback.predictedBin : (feedback.correctedBin || feedback.predictedBin);
+  const finalItem = feedback.userConfirmed ? feedback.predictedItem : (feedback.correctedItem || feedback.predictedItem);
+
+  // 1. Save locally to localStorage
+  if (typeof window !== "undefined") {
+    try {
+      const existing = getLocalDatasetSamples();
+      const updated = [{ ...feedback, timestamp: new Date().toISOString() }, ...existing].slice(0, 50);
+      localStorage.setItem(DATASET_STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn("[OneBin Dataset] Failed to save sample locally:", e);
+    }
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  let publicUrl: string | undefined = undefined;
+
+  // 2. Upload photo to Supabase Storage if configured
+  if (supabaseUrl && supabaseKey && feedback.photoBase64) {
+    try {
+      const matches = feedback.photoBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+      const base64Data = matches ? matches[2] : feedback.photoBase64;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "image/jpeg" });
+
+      const cleanItem = finalItem.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+      const filename = `${finalBin}/${Date.now()}-${cleanItem}.jpg`;
+
+      // Upload to 'waste-dataset' bucket
+      const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/waste-dataset/${filename}`, {
+        method: "POST",
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          "Content-Type": "image/jpeg",
+          "x-upsert": "true",
+        },
+        body: blob,
+      });
+
+      if (uploadRes.ok) {
+        publicUrl = `${supabaseUrl}/storage/v1/object/public/waste-dataset/${filename}`;
+      }
+
+      // 3. Record metadata in scans table
+      await fetch(`${supabaseUrl}/rest/v1/scans`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          bin: finalBin,
+          item: finalItem,
+          confidence: feedback.confidence,
+          image_url: publicUrl,
+          created_at: new Date().toISOString(),
+        }),
+      });
+
+      return {
+        success: true,
+        message: feedback.userConfirmed
+          ? "Confirmed! Added to verified dataset."
+          : `Correction recorded: Marked as ${finalBin.toUpperCase()}. Added to dataset.`,
+        url: publicUrl,
+      };
+    } catch (err) {
+      console.warn("[OneBin Dataset] Supabase upload failed, falling back to local:", err);
+    }
+  }
+
+  return {
+    success: true,
+    message: feedback.userConfirmed
+      ? "Confirmed! Saved locally to dataset."
+      : `Correction recorded: Marked as ${finalBin.toUpperCase()}. Saved locally.`,
+  };
+}
