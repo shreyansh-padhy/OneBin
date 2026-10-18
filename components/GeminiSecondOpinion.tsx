@@ -57,11 +57,20 @@ export default function GeminiSecondOpinion({ verdict, photo }: GeminiSecondOpin
     if (!photo) return;
 
     const isUncertain = verdict.lowConfidence || verdict.confidence < 0.6;
+    let debounceTimer: NodeJS.Timeout | null = null;
+
     if (isUncertain) {
-      fetchSecondOpinion();
+      // Debounce by 1200ms: prevents continuous cancellation storms during live 900ms Auto-Scan pulses.
+      // Fires only when the camera holds steady on an object or when user pauses/freezes.
+      debounceTimer = setTimeout(() => {
+        fetchSecondOpinion();
+      }, 1200);
     }
 
     return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
       if (activeReq.current) {
         activeReq.current.abort();
       }

@@ -29,6 +29,13 @@ const BIN_STYLE: Record<string, { card: string; bar: string; text: string; badge
   },
 };
 
+const UNCERTAIN_STYLE = {
+  card: "border-amber-200/90 bg-gradient-to-b from-amber-50/90 via-white to-amber-50/30 shadow-[0_12px_36px_rgba(245,158,11,0.14)] ring-1 ring-amber-500/20",
+  bar: "bg-amber-500",
+  text: "text-amber-900",
+  badge: "bg-amber-100 text-amber-900 border-amber-300",
+};
+
 const ITEM_LABEL: Record<string, string> = {
   battery: "Battery",
   biological: "Food / organic waste",
@@ -56,7 +63,7 @@ export default function VerdictCard({
   meta: ModelMeta;
   photo?: string | null;
 }) {
-  const style = BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash;
+  const style = verdict.lowConfidence ? UNCERTAIN_STYLE : (BIN_STYLE[verdict.bin] ?? BIN_STYLE.trash);
   const [iotFired, setIotFired] = useState(false);
 
   // IoT Web Serial actuation: gated command preventing flapping and low-confidence triggers
