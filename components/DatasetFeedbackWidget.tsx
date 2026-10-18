@@ -166,16 +166,52 @@ export default function DatasetFeedbackWidget({
             ))}
           </div>
 
+          {/* Material Selection */}
+          <div className="space-y-1.5 pt-1">
+            <p className="text-slate-600 font-medium">What is it made out of?</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: "metal", label: "🥫 Metal" },
+                { id: "paper", label: "📄 Paper" },
+                { id: "cardboard", label: "📦 Cardboard" },
+                { id: "plastic", label: "🧴 Plastic" },
+                { id: "glass", label: "🍾 Glass" },
+                { id: "biological", label: "🍎 Food / Organic" },
+                { id: "styrofoam", label: "🥡 Styrofoam" },
+                { id: "battery", label: "🔋 Battery" },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    setCustomItem(m.label.split(" ")[1]);
+                    // Auto-suggest appropriate bin for common materials (Seattle rules)
+                    if (m.id === "biological") setSelectedBin("compost");
+                    else if (["metal", "paper", "cardboard", "glass", "plastic"].includes(m.id)) setSelectedBin("recycling");
+                    else if (["styrofoam", "battery"].includes(m.id)) setSelectedBin("trash");
+                  }}
+                  className={`px-2 py-1 rounded-md text-[11px] font-medium border transition-colors ${
+                    customItem.toLowerCase().includes(m.id) || customItem.toLowerCase().includes(m.label.split(" ")[1].toLowerCase())
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-800 font-semibold shadow-xs"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label htmlFor="custom-item-input" className="text-[11px] text-slate-500">
-              Item description (optional):
+              What is it made out of? (optional description):
             </label>
             <input
               id="custom-item-input"
               type="text"
               value={customItem}
               onChange={(e) => setCustomItem(e.target.value)}
-              placeholder={`e.g. ${predictedItem.replace(/_/g, " ")} with food residue`}
+              placeholder="e.g. metal soda can, greasy paper, cardboard box, plastic pouch"
               className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
             />
           </div>
