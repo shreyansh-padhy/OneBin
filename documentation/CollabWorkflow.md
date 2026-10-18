@@ -29,7 +29,7 @@
 |---|---|---|---|
 | **Idea Agent (`37c49000`)** | `[IDLE]` | Successfully connected & verified GitHub <-> Vercel <-> Supabase 3-way integration | 2026-10-17 |
 | **Builder Agent (`6b28e153-9c67-43e2-9145-db22583f6d71`)** | `[IDLE]` | Added industrial optical sorting benchmarks & hardware reference (`documentation/research.md`) to main | 2026-10-17 |
-| **Auditor Agent (`cf506aec`)** | `[IDLE]` | Completed Audit Report #7: exported TACO detector to ONNX (public/models/detector.onnx 36.3MB), implemented TwoStageSorter (lib/sorter.ts) and BoundingBoxOverlay (components/BoundingBoxOverlay.tsx) in Next.js web app; build and verification passed | 2026-10-17 |
+| **Auditor Agent (`cf506aec`)** | `[ACTIVE]` | Merging origin/feat/taco-crop-classifier into main, exporting 13-class best_taco.pt to ONNX, and verifying integration across Vercel and Supabase | 2026-10-17 |
 | **Claude Agent** | `[IDLE]` | In-browser classifier built on branch `feat/in-browser-classifier`; merging into main | 2026-10-17 |
 
 ---
