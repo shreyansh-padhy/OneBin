@@ -1,7 +1,7 @@
 "use client";
 
 import { Camera, Cpu, Layers, Loader2, RotateCcw, Upload } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import CameraCapture from "@/components/CameraCapture";
 import SerialActuatorModal from "@/components/SerialActuatorModal";
@@ -29,6 +29,28 @@ export default function Sorter() {
   const [dragging, setDragging] = useState(false);
   const [showSerialModal, setShowSerialModal] = useState(false);
   const [serialActive, setSerialActive] = useState(false);
+  const loggedIndicesRef = useRef<Set<number>>(new Set());
+
+  const logItemTelemetry = useCallback((idx: number, itemList: SortedItem[]) => {
+    const target = itemList[idx];
+    if (!target || loggedIndicesRef.current.has(idx)) return;
+    loggedIndicesRef.current.add(idx);
+    logScanEvent({
+      bin: target.verdict.bin,
+      item: target.verdict.item,
+      confidence: target.verdict.confidence,
+      ms: target.verdict.ms,
+    });
+  }, []);
+
+  const handleSelectItem = useCallback((idx: number) => {
+    setSelectedIdx(idx);
+    const item = sortedItems[idx];
+    if (item) {
+      setVerdict(item.verdict);
+      logItemTelemetry(idx, sortedItems);
+    }
+  }, [sortedItems, logItemTelemetry]);
 
   function startLoading() {
     setModel({ status: "loading", progress: 0 });
@@ -56,6 +78,7 @@ export default function Sorter() {
       setSortedItems(items);
       setSelectedIdx(0);
       setImageDims({ width: frame.width, height: frame.height });
+      loggedIndicesRef.current.clear();
 
       // In auto-scan mode, capture the active item's crop or frame snapshot so VerdictCard has visual imagery
       if (isAuto) {
@@ -65,16 +88,10 @@ export default function Sorter() {
       const activeVerdict = items[0]?.verdict ?? null;
       setVerdict(activeVerdict);
 
-      // Log telemetry events for all detected items (manual mode only to prevent auto-scan spam)
-      if (!isAuto) {
-        for (const it of items) {
-          logScanEvent({
-            bin: it.verdict.bin,
-            item: it.verdict.item,
-            confidence: it.verdict.confidence,
-            ms: it.verdict.ms,
-          });
-        }
+      // Selective Telemetry: In manual mode, log ONLY the single intended item (item 0 initially).
+      // NEVER mass-log unselected background items to Supabase!
+      if (!isAuto && items.length > 0) {
+        logItemTelemetry(0, items);
       }
     } catch (err) {
       if (!isAuto) {
@@ -185,10 +202,7 @@ export default function Sorter() {
                   imageWidth={imageDims.width}
                   imageHeight={imageDims.height}
                   selectedIdx={selectedIdx}
-                  onSelect={(idx) => {
-                    setSelectedIdx(idx);
-                    setVerdict(sortedItems[idx].verdict);
-                  }}
+                  onSelect={handleSelectItem}
                 />
               )}
             </div>
@@ -257,13 +271,18 @@ export default function Sorter() {
       {/* Multi-Item Detected Selector Pill Bar */}
       {sortedItems.length > 1 && sortedItems[0].box && (
         <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-md p-3.5 shadow-sm">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-            <span className="flex items-center gap-1.5 text-emerald-700">
-              <Layers className="h-4 w-4" /> Multi-Item Stream Detected
-            </span>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600">
-              {sortedItems.length} items
-            </span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <Layers className="h-4 w-4" /> Multi-Item Stream Detected
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-semibold text-slate-600">
+                {sortedItems.length} items
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium">
+              Select the item you want to sort:
+            </p>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {sortedItems.map((it, idx) => {
@@ -285,13 +304,7 @@ export default function Sorter() {
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => {
-                    setSelectedIdx(idx);
-                    setVerdict(it.verdict);
-                    if (it.cropDataUrl) {
-                      setPhoto(it.cropDataUrl);
-                    }
-                  }}
+                  onClick={() => handleSelectItem(idx)}
                   className={`flex min-h-[44px] items-center gap-2 rounded-xl border p-1.5 pr-3 text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${binStyle}`}
                 >
                   {it.cropDataUrl ? (
@@ -313,9 +326,13 @@ export default function Sorter() {
         </div>
       )}
       
-      {/* Live Verdict Display for currently active item */}
+      {/* Live Verdict Display for currently active item (isolated crop, not entire scene) */}
       {verdict && sorter.current && (
-        <VerdictCard verdict={verdict} meta={sorter.current.classifier.meta} photo={photo} />
+        <VerdictCard
+          verdict={verdict}
+          meta={sorter.current.classifier.meta}
+          photo={sortedItems[selectedIdx]?.cropDataUrl || photo}
+        />
       )}
 
       {(verdict || error) && !cameraOpen && (

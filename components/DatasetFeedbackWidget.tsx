@@ -19,7 +19,7 @@ export default function DatasetFeedbackWidget({
   predictedItem,
   confidence,
 }: DatasetFeedbackWidgetProps) {
-  const [consent, setConsent] = useState<boolean>(true);
+  const [consent, setConsent] = useState<boolean>(false);
   const [step, setStep] = useState<"initial" | "correction" | "submitted">("initial");
   const [selectedBin, setSelectedBin] = useState<string>("recycling");
   const [customItem, setCustomItem] = useState<string>("");
