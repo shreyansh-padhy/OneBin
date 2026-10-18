@@ -120,7 +120,7 @@ export default function Sorter() {
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div className="h-full bg-slate-400 transition-all" style={{ width: `${(model.progress ?? 0) * 100}%` }} />
           </div>
-          <p className="mt-1 text-xs text-slate-400">Two-stage edge models (YOLO detector + classifier), cached locally.</p>
+          <p className="mt-1 text-xs text-slate-500">Two-stage edge models (YOLO detector + classifier), cached locally.</p>
         </div>
       )}
       {model.status === "error" && (
@@ -208,7 +208,7 @@ export default function Sorter() {
             type="button"
             onClick={() => setCameraOpen(true)}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3.5 font-semibold text-white shadow-lg shadow-slate-900/10 transition-all hover:bg-slate-800 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:opacity-50"
           >
             <Camera className="h-5 w-5 text-emerald-400" /> {photo ? "Retake" : "Open Camera"}
           </button>
@@ -216,7 +216,7 @@ export default function Sorter() {
             type="button"
             onClick={() => fileInput.current?.click()}
             disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-4 py-3.5 font-semibold text-slate-800 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 disabled:opacity-50"
           >
             <Upload className="h-5 w-5 text-slate-500" /> Upload Image
           </button>
@@ -271,7 +271,7 @@ export default function Sorter() {
                     setSelectedIdx(idx);
                     setVerdict(it.verdict);
                   }}
-                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${binStyle}`}
+                  className={`flex min-h-[38px] items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${binStyle}`}
                 >
                   <span>#{idx + 1} {it.verdict.bin.toUpperCase()}</span>
                   <span className="text-[10px] opacity-80">({it.verdict.item})</span>
@@ -291,7 +291,7 @@ export default function Sorter() {
         <button
           type="button"
           onClick={reset}
-          className="mx-auto flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
+          className="mx-auto flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
         >
           <RotateCcw className="h-4 w-4" /> Sort another item
         </button>
@@ -302,11 +302,11 @@ export default function Sorter() {
         <button
           type="button"
           onClick={() => setShowSerialModal(true)}
-          className={`inline-flex items-center gap-1.5 text-xs transition-colors ${
-            serialActive ? "font-semibold text-emerald-700" : "text-slate-400 hover:text-slate-600"
+          className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-3 py-2 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${
+            serialActive ? "font-semibold text-emerald-700" : "text-slate-500 hover:text-slate-800"
           }`}
         >
-          <Cpu className={`h-3.5 w-3.5 ${serialActive ? "text-emerald-600 animate-pulse" : "text-slate-400"}`} />
+          <Cpu className={`h-3.5 w-3.5 ${serialActive ? "text-emerald-600 animate-pulse" : "text-slate-500"}`} />
           <span>{serialActive ? "Smart Bin Connected (9600 baud)" : "Connect Physical Smart Bin (USB)"}</span>
         </button>
       </div>

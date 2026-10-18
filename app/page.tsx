@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Sorter from "@/components/Sorter";
 
 export default function Home() {
@@ -8,7 +7,7 @@ export default function Home() {
       <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
       <div className="pointer-events-none absolute -top-20 right-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
 
-      <main className="relative mx-auto min-h-screen w-full max-w-md space-y-6 px-4 py-8">
+      <main className="relative mx-auto min-h-screen w-full max-w-md space-y-6 px-4 py-8 sm:px-6">
         <header className="space-y-2 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 shadow-sm backdrop-blur-md">
             <span className="relative flex h-2 w-2">
@@ -21,29 +20,17 @@ export default function Home() {
           <h1 className="text-3xl font-black tracking-tight text-slate-900 flex items-center justify-center gap-2">
             <span>♻️ OneBin</span>
           </h1>
-          <p className="text-xs font-medium text-slate-500">
+          <p className="text-xs font-medium text-slate-600">
             Multi-item optical sorting for compost, recycling, and trash
           </p>
         </header>
 
-      <Sorter />
+        <Sorter />
 
-      <footer className="space-y-2 pt-4 text-center text-xs text-slate-400">
-        <p>Runs entirely in your browser. Automatic edge waste sorting.</p>
-        {/* Presentation Scoreboard preserved on /dashboard route and branch feat/hackathon-presentation-dashboard-and-rules */}
-        {/*
-        <div className="pt-2">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
-          >
-            <span>📺 Live Stage Scoreboard</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          </Link>
-        </div>
-        */}
-      </footer>
-    </main>
-  </div>
-);
+        <footer className="space-y-2 pt-4 text-center text-xs text-slate-500">
+          <p>Runs entirely in your browser. Automatic edge waste sorting.</p>
+        </footer>
+      </main>
+    </div>
+  );
 }

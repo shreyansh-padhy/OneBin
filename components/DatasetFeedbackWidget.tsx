@@ -124,18 +124,18 @@ export default function DatasetFeedbackWidget({
             type="button"
             onClick={handleConfirmCorrect}
             disabled={submitting}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 py-2 font-medium text-emerald-800 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+            className="flex-1 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 font-medium text-emerald-800 hover:bg-emerald-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 disabled:opacity-50"
           >
-            <ThumbsUp className="h-3.5 w-3.5" />
+            <ThumbsUp className="h-4 w-4" />
             <span>Yes, looks right</span>
           </button>
           <button
             type="button"
             onClick={handleStartCorrection}
             disabled={submitting}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 py-2 font-medium text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+            className="flex-1 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 disabled:opacity-50"
           >
-            <ThumbsDown className="h-3.5 w-3.5" />
+            <ThumbsDown className="h-4 w-4" />
             <span>No, wrong bin</span>
           </button>
         </div>
@@ -155,7 +155,7 @@ export default function DatasetFeedbackWidget({
                 key={b.id}
                 type="button"
                 onClick={() => setSelectedBin(b.id)}
-                className={`py-1.5 px-2 rounded-lg font-semibold border text-center transition-all ${
+                className={`min-h-[44px] py-2 px-2 rounded-lg font-semibold border text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${
                   selectedBin === b.id
                     ? "border-slate-900 bg-slate-900 text-white shadow-sm"
                     : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -190,7 +190,7 @@ export default function DatasetFeedbackWidget({
                     else if (["metal", "paper", "cardboard", "glass", "plastic"].includes(m.id)) setSelectedBin("recycling");
                     else if (["styrofoam", "battery"].includes(m.id)) setSelectedBin("trash");
                   }}
-                  className={`px-2 py-1 rounded-md text-[11px] font-medium border transition-colors ${
+                  className={`min-h-[36px] px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1 ${
                     customItem.toLowerCase().includes(m.id) || customItem.toLowerCase().includes(m.label.split(" ")[1].toLowerCase())
                       ? "border-emerald-600 bg-emerald-50 text-emerald-800 font-semibold shadow-xs"
                       : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -203,7 +203,7 @@ export default function DatasetFeedbackWidget({
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="custom-item-input" className="text-[11px] text-slate-500">
+            <label htmlFor="custom-item-input" className="text-xs text-slate-600 font-medium">
               What is it made out of? (optional description):
             </label>
             <input
@@ -212,7 +212,7 @@ export default function DatasetFeedbackWidget({
               value={customItem}
               onChange={(e) => setCustomItem(e.target.value)}
               placeholder="e.g. metal soda can, greasy paper, cardboard box, plastic pouch"
-              className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-900 focus:outline-none"
             />
           </div>
 
@@ -221,25 +221,26 @@ export default function DatasetFeedbackWidget({
               type="button"
               onClick={handleSubmitCorrection}
               disabled={submitting}
-              className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-1.5 font-semibold text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              className="flex-1 flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 px-3 font-semibold text-white hover:bg-emerald-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1 disabled:opacity-50"
             >
-              <Check className="h-3.5 w-3.5" />
+              <Check className="h-4 w-4" />
               <span>{submitting ? "Submitting..." : "Submit Ground-Truth"}</span>
             </button>
             <button
               type="button"
               onClick={() => setStep("initial")}
               disabled={submitting}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-slate-600 hover:bg-slate-50 transition-colors"
+              aria-label="Cancel correction"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-slate-200 px-3 py-2 text-slate-600 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-1"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
       )}
 
       {consent && (
-        <p className="text-[10px] text-slate-400 leading-tight">
+        <p className="text-[10px] text-slate-500 leading-tight">
           Photo (JPEG) &amp; confirmed labels will be uploaded to Supabase to train future model iterations.
         </p>
       )}
