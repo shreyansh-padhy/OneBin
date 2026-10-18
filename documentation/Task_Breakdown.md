@@ -3,37 +3,39 @@
 **Author**: Idea Agent (`37c49000-b853-46b7-a7ac-99fccc7efc1f`)  
 **Target Execution Agent**: Builder Agent  
 **Auditing Agent**: Auditor Agent (`cf506aec-8778-4065-af52-8112e7feeff2`)  
-**Phase Objective**: Transition from local Python/Gradio prototype to a production-ready, cloud-deployable web application on **Vercel** powered by an **in-browser ONNX WebAssembly** neural network for instant, zero-cost, zero-API-key waste categorization into Compost, Recycling, and Trash adhering to Seattle Public Utilities rules.
+**Phase Objective**: Transition from local Python prototype to a facility-grade, cloud-deployable sorting intelligence system on **Vercel** powered by an **in-browser ONNX WebAssembly** neural network for instant, zero-cost, zero-API-key waste classification into Compost, Recycling, and Trash adhering to Seattle Public Utilities rules.
 
 ---
 
-## Architecture Overview (Pure Edge WebAssembly)
+## Architecture Overview (Facility Sorting Intelligence)
+
+> **The OneBin Core Concept**: Citizens use **ONE SINGLE BIN** ("OneBin"), eliminating consumer sorting fatigue and curbside contamination. All mixed municipal waste is collected together and processed downstream at **centralized municipal recovery facilities (MRFs) / sorting centers**, where OneBin's computer vision and automated mechanical actuators classify and separate the stream into Compost, Recycling, and Trash. All sensing is **100% visual/optical (zero microphones)**.
 
 ```
-[User Browser / Mobile Camera]
-       │
-       ▼ (Instant Local Image Capture / Center-Crop 320x320)
+[Unified Municipal Waste Stream (Single Bin for Consumers)]
+                         │
+                         ▼ (Transported to Municipal Recovery Facility)
+[Facility Camera / Conveyor Chute (100% Optical - Zero Microphones)]
+                         │
+                         ▼ (Instant Local Frame Capture / Center-Crop 320x320)
 [onnxruntime-web (WASM + SIMD Threads)]
    • Model: onebin.onnx (FP16, 41.7MB)
-   • 12 Seattle fine-grained classes -> 3 municipal bins
-   • Runs 100% on client device CPU/GPU
+   • 12 Seattle fine-grained classes -> 3 municipal streams
+   • Runs 100% on facility terminal / browser
    • Zero cloud latency (~20ms - 50ms)
    • Zero external API keys, Zero compute costs
-       │
-       ▼
-┌────────────────────────────────────────────────────────┐
-│ On-Device Verdict Presentation Card                    │
-│ • Clear Bin Target (Compost / Recycling / Trash)       │
-│ • Item Identification & Summed Bin Probabilities (%)   │
-│ • Seattle Rules & Contamination Warnings (e.g. Battery)│
-│ • Low Confidence Guardrail ("When in doubt, trash")    │
-│ • Measured On-Device Inference Speed (ms)              │
-└────────────────────────────────────────────────────────┘
+                         │
+        ┌────────────────┴────────────────┐
+        ▼                                 ▼
+[Physical IoT Servo Diverter]     [Facility Stage Telemetry]
+• Web Serial API (9600 baud)      • /dashboard
+• Mechanical sorting actuation    • Real-time throughput & diversion stats
+• Arduino firmware (Uno / ESP32)  • BroadcastChannel / Supabase
 ```
 
 ---
 
-> **Phase 1 Architecture (Client-Side ONNX Engine)**: The web app executes 100% locally in the user's browser. Vercel acts as a high-performance static host and Edge CDN delivering the Next.js bundle and model weights. No external API keys (including Gemini API) or serverless backend containers (Docker) are required.
+> **Phase 1 Architecture (Facility Edge ONNX Engine)**: The application executes 100% locally on the facility terminal. Vercel acts as a static host and Edge CDN delivering the Next.js bundle and model weights. No external API keys (zero Gemini API keys) or serverless backend containers (Docker) are required. All sensing is visual with zero microphone inputs.
 
 ## Atomic Task List
 

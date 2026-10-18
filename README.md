@@ -1,21 +1,40 @@
 # OneBin 🗑️♻️🌱
 
-> **Instant, zero-latency waste sorting powered entirely on-device by in-browser ONNX WebAssembly.**
-> Zero API keys, zero cloud latency, zero compute costs, 100% private.
+> **Automated waste classification and mechanical sorting intelligence for municipal recovery facilities.**
+> Citizens use **one single bin** — computer vision separates compost, recycling, and trash at the facility.
+> Zero API keys, zero cloud latency, zero compute costs, 100% optical sensing (no microphones).
 
-Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)
+Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)  
+Facility Stage Telemetry: [https://onebin.vercel.app/dashboard](https://onebin.vercel.app/dashboard)
 
 ---
 
-## Overview
+## The OneBin Paradigm
 
-**OneBin** solves the universal contamination problem in urban recycling and composting. Users simply point their device's camera or upload a photo of discarded waste, and OneBin immediately categorizes it into **🟢 Compost**, **🔵 Recycling**, or **⚫ Trash** according to **Seattle Public Utilities (SPU)** municipal regulations.
+Today's curbside recycling system places the entire cognitive burden on citizens to manually segregate waste into three bins (Trash, Compost, Recycling). This model fails universally:
+- **Consumer Confusion & Fatigue**: Citizens struggle with ambiguous materials (coffee cups, greasy pizza boxes, plastic wrap, bio-plastics).
+- **Catastrophic Contamination**: A single contaminated item can ruin an entire multi-ton recycling bale, costing cities millions in landfill fines and generating methane emissions.
 
-### Key Capabilities
-- **⚡ Instant On-Device Inference (< 50ms)**: Runs entirely client-side using `onnxruntime-web` with WebAssembly (WASM), Web Workers, and SIMD acceleration. Works completely offline with zero latency and full user privacy.
-- **🔑 Zero API Keys Required**: No external cloud AI API keys (Google Gemini, OpenAI, Anthropic, etc.) required. All neural network weights execute within the client browser sandbox.
+### The Solution: One Unified Bin for Citizens, AI Separation at the Facility
+With **OneBin**, everyday people and businesses dispose of all waste into **ONE SINGLE BIN** ("OneBin") without sorting anxiety. 
+
+The entire mixed waste stream is collected and transported to **centralized municipal recovery facilities (MRFs) and sorting stations**. Downstream sorting lines deploy OneBin's computer vision and automated mechanical actuators (conveyor diverters, servos, pneumatic air sorters) to classify and split the stream into:
+- **🟢 Compost** (Food waste, organics, yard debris)
+- **🔵 Recycling** (Clean cardboard, paper, glass, metals, rigid plastics)
+- **⚫ Trash** (Non-recyclable films, styrofoam, general landfill)
+
+---
+
+## Key Capabilities
+
+- **🏭 Facility-Grade Computer Vision**: High-speed frame classification designed for conveyor belts, chute diverters, and facility sorting lines.
+- **⚡ Instant On-Device Inference (< 50ms)**: Runs entirely client-side on facility terminals using `onnxruntime-web` with WebAssembly (WASM), Web Workers, and SIMD acceleration. Works completely offline with zero latency.
+- **👁️ 100% Optical Sensing (Zero Microphone Usage)**: All classification is strictly visual. No microphones or audio inputs are used or required.
+- **🔑 Zero Cloud API Keys Required**: No external paid AI API keys (Google Gemini, OpenAI, etc.). All neural network weights execute within the local sandbox.
+- **🤖 Physical IoT Actuation**: Integrated Web Serial API communicating with microcontroller hardware (`firmware/arduino_bins.ino`) to drive physical lid/conveyor servo diverters in real time.
+- **📊 Realtime Facility Telemetry**: Live stage and facility dashboard (`/dashboard`) monitoring sorting throughput, landfill diversion rates, and contamination metrics over `BroadcastChannel` and Supabase Realtime.
 - **🛡️ Seattle Municipal Waste Compliance**:
-  - **Plastic Bags & Films**: Strictly routed to **Trash** (they tangle mechanical sorting facility star screens).
+  - **Plastic Bags & Films**: Strictly routed to **Trash** (they tangle mechanical sorting star screens).
   - **Styrofoam / Expanded Polystyrene**: Strictly routed to **Trash** (not curbside recyclable).
   - **Batteries & Hazards**: Routed to **Trash** with high-visibility safety warnings directing to hazardous waste drop-off locations.
   - **Uncertain / Ambiguous Items**: Automated low-confidence flag: *"When in doubt, trash."*
@@ -24,27 +43,29 @@ Live Production: [https://onebin.vercel.app](https://onebin.vercel.app)
 
 ## Edge Architecture
 
-OneBin executes 100% client-side in the browser:
-
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       Client Browser                        │
-├─────────────────────────────────────────────────────────────┤
-│    Local Edge Inference (onnxruntime-web / WASM)            │
-│                                                             │
-│   • Model: public/models/onebin.onnx (FP16, 41.7MB)         │
-│   • Speed: ~20-50ms                                         │
-│   • Offline: Yes                                            │
-│   • Privacy: 100% on-device (camera frames never leave device)
-│   • Zero Cloud Compute Costs                                │
-└──────────────────────────────┬──────────────────────────────┘
-                               │
-                               ▼
-                      [ Instant Verdict ]
+[Unified Waste Stream: One Single Bin for Consumers]
+                         │
+                         ▼ (Transported to Municipal Facility)
+[High-Speed Visual Facility Camera (Zero Microphones)]
+                         │
+                         ▼ (Center-Crop 320x320 Optical Frame)
+[onnxruntime-web (WebAssembly + SIMD Threads)]
+   • Model: public/models/onebin.onnx (FP16, 41.7MB)
+   • 12 Seattle fine-grained classes -> 3 streams
+   • Speed: ~20ms - 50ms on facility terminal
+   • Zero Cloud API Keys, Zero Cloud Compute Costs
+                         │
+        ┌────────────────┴────────────────┐
+        ▼                                 ▼
+[Physical IoT Servo Actuator]     [Facility Stage Telemetry]
+• Web Serial API (9600 baud)      • /dashboard
+• Drives physical bin diverters   • Live diversion stats & logs
+• Arduino firmware (Uno / ESP32)  • BroadcastChannel / Supabase
 ```
 
 ### 12-Class Seattle Taxonomy (`bins.py`)
-| Fine Class | Curbside Bin | Municipal Handling Rule |
+| Fine Class | Curbside Stream | Municipal Handling Rule |
 |---|---|---|
 | `biological` | 🟢 Compost | Food scraps, yard waste, BPI-certified packaging |
 | `cardboard` | 🔵 Recycling | Flattened, clean, dry boxes |
@@ -66,8 +87,10 @@ OneBin executes 100% client-side in the browser:
 - **Framework**: Next.js 15 (App Router), React 19, TypeScript
 - **Styling**: Tailwind CSS, Lucide React
 - **Edge ML**: `onnxruntime-web` (WASM + multi-threading via COOP/COEP headers)
+- **IoT & Hardware**: Web Serial API, Arduino C++ Servo Firmware (`firmware/arduino_bins.ino`)
+- **Telemetry & Sync**: Supabase Realtime, native browser `BroadcastChannel`
 - **Deployment**: Vercel Serverless Edge, GitHub Actions automated CI/CD pipeline
-- **Model Training & Export**: PyTorch, torchvision, ONNX (`export_onnx.py`)
+- **Model Training**: PyTorch, torchvision, ONNX (trained offline across 4 combined waste benchmarks; currently iterating through training checkpoints)
 
 ---
 
@@ -91,52 +114,16 @@ OneBin executes 100% client-side in the browser:
    ```
    *(The `predev` and `prebuild` lifecycle scripts automatically copy ONNX runtime WASM assets to `public/ort/`)*
 
-3. Start the development server (No API keys or `.env` needed!):
+3. Start the development server (No API keys or `.env` required!):
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+   Open [http://localhost:3000](http://localhost:3000) for the facility sorting view, or [http://localhost:3000/dashboard](http://localhost:3000/dashboard) for the stage telemetry scoreboard.
 
 ---
 
-## Scripts & Commands
-
-- `npm run dev`: Launch Next.js local development server (with ONNX WASM pre-copy).
-- `npm run build`: Production build with static optimization.
-- `npm run lint`: Run ESLint checks.
-- `npm run start`: Start production server.
-- `python export_onnx.py`: Export PyTorch model (`checkpoints/best.pt`) to ONNX (`public/models/onebin.onnx`) and generate metadata (`public/models/onebin.json`).
-
----
-
-## Deployment & Hosting
-
-OneBin is continuously deployed to **Vercel** via GitHub Actions:
-- **No Docker containers required**: The ONNX model is served as an optimized static asset via Vercel's global CDN and executes inside the client's browser.
-- Every push to `main` executes linting, type validation, and production build checks.
-- On successful validation, GitHub Actions deploys the build directly to Vercel production:
-  - **Live URL**: [https://onebin.vercel.app](https://onebin.vercel.app)
-
----
-
-## Physical IoT Smart Bin Actuation (Web Serial API)
-
-OneBin supports real-time physical bin actuation via the browser-native **Web Serial API**:
-- **Zero Drivers / Plugins**: Plug an Arduino Uno/Nano or ESP32 into your computer via USB (or pair via Bluetooth Serial), and tap **"Connect Smart Bin"** in the web app.
-- **Microcontroller Protocol (9600 Baud)**:
-  - `'C\n'` $\rightarrow$ Pops open the **Compost Lid (🟢 Green)** on Pin 9
-  - `'R\n'` $\rightarrow$ Pops open the **Recycling Lid (🔵 Blue)** on Pin 10
-  - `'T\n'` $\rightarrow$ Pops open the **Trash Lid (⚫ Black)** on Pin 11
-  - `'X\n'` $\rightarrow$ Immediately closes all lids
-- **Firmware Included**: See [`firmware/arduino_bins.ino`](firmware/arduino_bins.ino) for the complete, plug-and-play Arduino/ESP32 sketch with automatic 4-second lid closure.
-
----
-
-## Hackathon Pitch & Free-Tier Presentation Features
-
-- **Live Presentation Dashboard ([`/dashboard`](https://onebin.vercel.app/dashboard))**: A high-impact scoreboard designed for live hackathon pitch projection. As judges scan items on their mobile phones, the stage dashboard updates in real time with live diversion percentage, CO₂ savings, and animated stream cards over WebSockets & BroadcastChannel.
-- **Dynamic Municipality Policy Engine ([`lib/rules.ts`](lib/rules.ts))**: Switch sorting policies on the fly between **Seattle SPU**, **Bellevue**, and **UW Campus** dining rules with sub-15ms dynamic overrides powered by **Vercel Edge Config**.
-- **Open UW Waste Dataset Contribution ([`app/api/contribute/route.ts`](app/api/contribute/route.ts))**: Users can opt in to anonymously contribute item photos to train future UW campus waste models, backed by **Vercel Blob Storage Free Tier**.
+## Hardware Integration (IoT Smart Sorter)
+For automated physical sorting, connect an Arduino Uno / ESP32 running [`firmware/arduino_bins.ino`](firmware/arduino_bins.ino) via USB. Click **"Connect Smart Bin"** in the web interface to establish a 9600-baud Web Serial connection. The application automatically triggers servo diverters for each classified item.
 
 ---
 
